@@ -19,10 +19,14 @@ class PowerCaseWorkspace {
  }
  database(){
   this.databasePromise??=new Promise((resolve,reject)=>{
+   let finished=false;
+   const fail=error=>{if(finished)return;finished=true;clearTimeout(timer);reject(error);};
+   const timer=setTimeout(()=>fail(new Error('Local database timed out')),4000);
    const request=indexedDB.open('powercase-workspaces',1);
    request.onupgradeneeded=()=>request.result.createObjectStore('workspaces');
-   request.onsuccess=()=>resolve(request.result);
-   request.onerror=()=>reject(request.error);
+   request.onsuccess=()=>{if(finished){request.result.close();return;}finished=true;clearTimeout(timer);resolve(request.result);};
+   request.onerror=()=>fail(request.error);
+   request.onblocked=()=>fail(new Error('Local database is blocked'));
   }).catch(error=>{this.databasePromise=null;throw error;});
   return this.databasePromise;
  }
@@ -31,9 +35,12 @@ class PowerCaseWorkspace {
    await this.cacheTail;
    const db=await this.database();
    return await new Promise((resolve,reject)=>{
-    const request=db.transaction('workspaces').objectStore('workspaces').get(scope);
-    request.onsuccess=()=>resolve(request.result);
-    request.onerror=()=>reject(request.error);
+    const transaction=db.transaction('workspaces');
+    const timer=setTimeout(()=>{reject(new Error('Local read timed out'));try{transaction.abort();}catch{}},4000);
+    const request=transaction.objectStore('workspaces').get(scope);
+    request.onsuccess=()=>{clearTimeout(timer);resolve(request.result);};
+    request.onerror=()=>{clearTimeout(timer);reject(request.error);};
+    transaction.onabort=()=>{clearTimeout(timer);reject(transaction.error||new Error('Local read interrupted'));};
    });
   }catch{return null;}
  }
@@ -44,10 +51,11 @@ class PowerCaseWorkspace {
    const db=await this.database();
    await new Promise((resolve,reject)=>{
     const transaction=db.transaction('workspaces','readwrite');
+    const timer=setTimeout(()=>{reject(new Error('Local save timed out'));try{transaction.abort();}catch{}},4000);
     transaction.objectStore('workspaces').put(record,scope);
-    transaction.oncomplete=resolve;
-    transaction.onerror=()=>reject(transaction.error);
-    transaction.onabort=()=>reject(transaction.error||new Error('Local save interrupted'));
+    transaction.oncomplete=()=>{clearTimeout(timer);resolve();};
+    transaction.onerror=()=>{clearTimeout(timer);reject(transaction.error);};
+    transaction.onabort=()=>{clearTimeout(timer);reject(transaction.error||new Error('Local save interrupted'));};
    });
   }).catch(()=>{this.notify('local-error');});
   return this.cacheTail;
@@ -67,6 +75,7 @@ class PowerCaseWorkspace {
   if(this.scope===scope)return;
   const epoch=++this.epoch;
   const previousScope=this.scope;
+  this.notify('loading');
   await this.stash();
   const guest=previousScope==='guest'&&this.dirty?await this.cached('guest'):null;
   if(epoch!==this.epoch)return;
@@ -82,6 +91,9 @@ class PowerCaseWorkspace {
   }
   this.localCandidate=local?.pending?local:guest?.pending?guest:local;
   this.guestImport=this.localCandidate===guest?guest:null;
+  this.version=this.localCandidate?.version||0;
+  if(this.localCandidate?.data)this.restore(this.localCandidate.data);
+  this.notify('syncing');
   await this.loadRemote(epoch);
  }
  async loadRemote(epoch=this.epoch){
@@ -139,7 +151,7 @@ class PowerCaseWorkspace {
  }
  async retry(){
   if(!this.userId)return;
-  if(!this.ready){this.notify('loading');await this.loadRemote();}
+  if(!this.ready){this.notify('syncing');await this.loadRemote();}
   else await this.flush();
  }
  async resolve(choice){

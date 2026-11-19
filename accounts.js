@@ -4,21 +4,31 @@ class PowerCaseAccounts {
   this.clientPromise=null;
  }
  get configured(){return Boolean(this.config.url&&this.config.publishableKey);}
+ async fetch(input,options={}){
+  const controller=new AbortController();
+  const abort=()=>controller.abort();
+  if(options.signal?.aborted)abort();else options.signal?.addEventListener('abort',abort,{once:true});
+  const timer=setTimeout(abort,12000);
+  try{return await fetch(input,{...options,signal:controller.signal});}
+  finally{clearTimeout(timer);options.signal?.removeEventListener('abort',abort);}
+ }
  async client(){
   if(!this.configured)throw new Error('Las cuentas aún están pendientes de activación.');
-  this.clientPromise??=import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/+esm').then(({createClient})=>createClient(this.config.url,this.config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}})).catch(error=>{this.clientPromise=null;throw error;});
+  this.clientPromise??=import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/+esm').then(({createClient})=>createClient(this.config.url,this.config.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true},global:{fetch:(input,options)=>this.fetch(input,options)}})).catch(error=>{this.clientPromise=null;throw error;});
   return this.clientPromise;
  }
  async initialize(onUser){
   if(!this.configured){onUser(null);return;}
   const client=await this.client();
+  let revision=0;
   client.auth.onAuthStateChange((event,session)=>{
-   if(event==='INITIAL_SESSION')return;
+   if(event==='INITIAL_SESSION'&&!session?.user)return;
+   revision++;
    setTimeout(()=>onUser(session?.user||null),0);
   });
   const {data,error}=await client.auth.getUser();
   if(error&&error.name!=='AuthSessionMissingError')throw error;
-  await onUser(data?.user||null);
+  if(revision===0)await onUser(data?.user||null);
  }
  async signIn(email,password){
   const client=await this.client();

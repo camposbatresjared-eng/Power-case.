@@ -6,6 +6,12 @@ const getFinish=id=>FINISHES.find(f=>f.id===id)||FINISHES[0];
 let modelId='iphone17',group='todo',query='',mode='signin',session=null,bag=[],pending=null,timer;
 const accounts=new PowerCaseAccounts(window.POWERCASE_ACCOUNT_CONFIG);
 let workspace;
+let accountInitializing=true,accountInitialization=Promise.resolve();
+async function within(promise,message,milliseconds=12000){
+ let deadline;
+ try{return await Promise.race([promise,new Promise((resolve,reject)=>{deadline=setTimeout(()=>reject(new Error(message)),milliseconds);})]);}
+ finally{clearTimeout(deadline);}
+}
 let pendingFavorite=null,favoritesStatus='signed-out',favoritesLoad=Promise.resolve(),accountRevision=0;
 const favoriteWrites=new Set();
 const modelOptions=id=>[['Teléfonos',false],['Tabletas',true]].map(([label,tablet])=>`<optgroup label="${label}">${MODELS.filter(m=>Boolean(m.tablet)===tablet).map(m=>`<option value="${m.id}" ${m.id===id?'selected':''}>${m.name}</option>`).join('')}</optgroup>`).join('');
@@ -50,7 +56,7 @@ function syncFavorites(){
   const f=getFinish(button.dataset.favoriteFinish),m=getModel(button.dataset.favoriteModel);
   const saved=favorites.has(favoriteKey(f,m));
   button.setAttribute('aria-pressed',saved);
-  button.disabled=Boolean(session&&(favoritesStatus!=='ready'||favoriteWrites.has(favoriteKey(f,m))));
+  button.disabled=Boolean(session&&(favoritesStatus==='loading'||favoriteWrites.has(favoriteKey(f,m))));
   button.setAttribute('aria-label',`${saved?'Quitar de':'Añadir a'} favoritos ${f.name} para ${m.name}`);
   button.title=saved?'Quitar de favoritos':'Añadir a favoritos';
   const text=button.querySelector('span');
@@ -67,7 +73,7 @@ async function loadAccountFavorites(){
  const userId=session.id,revision=accountRevision;
  favoritesStatus='loading';refreshFavorites();
  try{
-  const rows=await accounts.favorites(userId);
+  const rows=await within(accounts.favorites(userId),'Favorites load timed out');
   if(session?.id!==userId||revision!==accountRevision)return;
   favorites=readFavorites(rows);favoritesStatus='ready';
  }catch{
@@ -78,7 +84,7 @@ async function loadAccountFavorites(){
 }
 function activateAccount(user){
  if(user&&session?.id===user.id)return favoritesLoad;
- const workspaceLoad=workspace?.open(user?.id||null);
+ const workspaceLoad=workspace?.open(user?.id||null).catch(()=>workspaceNotice('offline'));
  accountRevision++;
  session=user?{id:user.id,email:user.email,name:user.user_metadata?.full_name||'de nuevo'}:null;
  favorites=new Map();favoriteWrites.clear();
@@ -114,14 +120,17 @@ async function writeFavorite(f,m,save){
   if(revision===accountRevision){favoriteWrites.delete(key);syncFavorites();}
  }
 }
-document.addEventListener('click',event=>{
+document.addEventListener('click',async event=>{
  if(event.target.closest('[data-favorites-login]')){account();return;}
  if(event.target.closest('[data-favorites-retry]')){favoritesLoad=loadAccountFavorites();return;}
  const button=event.target.closest('[data-favorite-finish]');
  if(!button)return;
  const f=getFinish(button.dataset.favoriteFinish),m=getModel(button.dataset.favoriteModel);
+ if(!session&&accountInitializing)await accountInitialization;
  if(!session){pendingFavorite={finish:f.id,model:m.id};account();return;}
+ if(favoritesStatus==='error')await loadAccountFavorites();
  if(favoritesStatus==='ready')writeFavorite(f,m,!favorites.has(favoriteKey(f,m)));
+ else if(favoritesStatus==='error')toast('No pudimos conectar con tus favoritos. Comprueba tu conexión y vuelve a intentarlo.');
 });
 const CASE_VIEWS = [['01-trasera','Trasera'],['02-agarre-separado','Agarre separado'],['03-interior','Interior'],['04-perfil','Perfil']];
 const STUDIO_FINISHES = {
@@ -198,7 +207,7 @@ function authMode(m){
  $('#signin').setAttribute('aria-pressed',!signup);$('#signup').setAttribute('aria-pressed',signup);
  $('#auth-status').textContent=accounts.configured?'':'Las cuentas están pendientes de activación. Pronto podrás guardar tus favoritos en tu cuenta.';
 }
-function account(){if(session){$('#profile-title').textContent=`Hola, ${session.name}.`;$('#profile-email').textContent=session.email;$('#profile').showModal();}else{authMode('signin');$('#auth').showModal();}}
+async function account(){if(!session&&accountInitializing)await accountInitialization;if(session){$('#profile-title').textContent=`Hola, ${session.name}.`;$('#profile-email').textContent=session.email;$('#profile').showModal();}else{authMode('signin');$('#auth').showModal();}}
 function add(item){bag.push(item);$('#count').textContent=bag.length;workspace?.changed();toast('Tu Power Case se añadió a la selección.');}
 const STICKER_SHEETS = [
  ['kit-de-personalizacion','Kit de Personalización'],
@@ -350,14 +359,14 @@ function restoreWorkspace(data){
  lastStickerEdit={key:'',time:0};
 }
 function workspaceNotice(status){
- const messages={loading:'Recuperando tus diseños…',pending:'Cambios pendientes de guardar…',saving:'Guardando en tu cuenta…',saved:'Todo guardado en tu cuenta.',guest:'',offline:'No se pudo sincronizar con tu cuenta. Puedes seguir editando; reintenta la sincronización para guardar en tu cuenta.',conflict:'Hay otra versión guardada en tu cuenta. Elige cuál conservar.', 'local-error':'No se pudo guardar la copia local. Mantén abierta la página hasta que termine el guardado en tu cuenta.'};
+ const messages={loading:'Recuperando tus diseños…',syncing:'Sincronizando tus diseños…',pending:'Cambios pendientes de guardar…',saving:'Guardando en tu cuenta…',saved:'Todo guardado en tu cuenta.',guest:'',offline:'No se pudo sincronizar con tu cuenta. Puedes seguir editando; reintenta la sincronización para guardar en tu cuenta.',conflict:'Hay otra versión guardada en tu cuenta. Elige cuál conservar.', 'local-error':'No se pudo guardar la copia local. Mantén abierta la página hasta que termine el guardado en tu cuenta.'};
  const root=$('#workspace-status');
  root.hidden=status==='saved'||status==='guest';root.dataset.state=status;
  root.querySelector('[data-workspace-message]').textContent=messages[status];
  root.querySelector('[data-workspace-retry]').hidden=status!=='offline';
  for(const button of root.querySelectorAll('[data-workspace-resolve]'))button.hidden=status!=='conflict';
  for(const section of document.querySelectorAll('.sticker-editor,.saved-stickers'))section.inert=status==='loading';
- $('#bag').disabled=status==='loading';
+ $('#bag').disabled=false;
  const purchase=$('#purchase');if(purchase)purchase.disabled=status==='loading';
 }
 function selectSceneSticker(id){
@@ -898,7 +907,7 @@ $('#bag-content').addEventListener('change',event=>{
  $('[data-sticker-total]').textContent=stickerTotal();workspace?.changed();
 });
 function bagContent(){return bag.length?`${bag.map((item,i)=>{const f=getFinish(item.finish),m=getModel(item.model);return `<article class="bag-item">${photo(m,f,true)}<div><h3>${f.name}</h3><p>${m.name}</p><p>${GROUPS[f.group]}</p><p>${casePrice(m)}</p><button data-remove="${i}" aria-label="Eliminar ${f.name} para ${m.name}">Eliminar</button></div></article>`;}).join('')}${bagStickers()}<p class="note">Tu selección se guarda en tu cuenta. Las compras estarán disponibles próximamente.</p><button class="button dark full" disabled>Compras disponibles próximamente</button>`:`<p class="empty">Tu bolsa espera algo especial.</p><a class="button dark full" href="#/coleccion" id="bag-explore">Explorar colección</a><a class="text-link" href="#/personalizacion" data-customize-link>Diseñar mis propios stickers</a>`;}
-document.addEventListener('click',event=>{const close=event.target.closest('[data-close]');if(close){$('#'+close.dataset.close).close();if(close.dataset.close==='auth')pending=null;}const filter=event.target.closest('[data-group]');if(filter){group=filter.dataset.group;query='';location.hash=`/coleccion/${modelId}${group==='todo'?'':'/'+group}`;}const buy=event.target.closest('#purchase');if(buy){const item={finish:buy.dataset.finish,model:buy.dataset.model};if(session)add(item);else{pending=item;account();}}const remove=event.target.closest('[data-remove]');if(remove){bag.splice(Number(remove.dataset.remove),1);if(!bag.length)selectedStickers.clear();$('#count').textContent=bag.length;$('#bag-content').innerHTML=bagContent();workspace?.changed();}if(event.target.closest('#bag-explore'))$('#bag-dialog').close();const zoom=event.target.closest('[data-gallery-zoom]');if(zoom){const img=zoom.querySelector('img');$('#image-dialog-content').innerHTML=`<img src="${img.src}" alt="${safe(img.alt)}">`;$('#image-dialog').showModal();}});
+document.addEventListener('click',async event=>{const close=event.target.closest('[data-close]');if(close){$('#'+close.dataset.close).close();if(close.dataset.close==='auth')pending=null;}const filter=event.target.closest('[data-group]');if(filter){group=filter.dataset.group;query='';location.hash=`/coleccion/${modelId}${group==='todo'?'':'/'+group}`;}const buy=event.target.closest('#purchase');if(buy){if(!session&&accountInitializing)await accountInitialization;const item={finish:buy.dataset.finish,model:buy.dataset.model};if(session)add(item);else{pending=item;account();}}const remove=event.target.closest('[data-remove]');if(remove){bag.splice(Number(remove.dataset.remove),1);if(!bag.length)selectedStickers.clear();$('#count').textContent=bag.length;$('#bag-content').innerHTML=bagContent();workspace?.changed();}if(event.target.closest('#bag-explore'))$('#bag-dialog').close();const zoom=event.target.closest('[data-gallery-zoom]');if(zoom){const img=zoom.querySelector('img');$('#image-dialog-content').innerHTML=`<img src="${img.src}" alt="${safe(img.alt)}">`;$('#image-dialog').showModal();}});
 document.addEventListener('change',event=>{if(event.target.id==='catalog-model'){query='';location.hash=`/coleccion/${event.target.value}${group==='todo'?'':'/'+group}`;}if(event.target.id==='product-model'){const r=parseRoute();location.hash=`/producto/${r[1]}/${event.target.value}`;}});
 document.addEventListener('input',event=>{if(event.target.id!=='catalog-search')return;query=event.target.value;const m=getModel(modelId),list=modelFinishes(m).filter(f=>(group==='todo'||f.group===group)&&f.name.toLocaleLowerCase('es').includes(query.toLocaleLowerCase('es')));$('#product-grid').innerHTML=list.map(f=>card(f,m)).join('')||'<p class="empty">No encontramos ese acabado.</p>';$('#result-count').textContent=`Acabados disponibles`;});
 $('#auth-form').addEventListener('submit',async event=>{
@@ -908,12 +917,13 @@ $('#auth-form').addEventListener('submit',async event=>{
  const signingUp=mode==='signup';
  try{
   const email=$('#email').value.trim(),password=$('#password').value;
-  const result=signingUp?await accounts.signUp($('#name').value.trim(),email,password):await accounts.signIn(email,password);
+  const result=await within(signingUp?accounts.signUp($('#name').value.trim(),email,password):accounts.signIn(email,password),'Account request timed out');
   $('#password').value='';
   if(!result.session){$('#auth-status').textContent='Revisa tu correo para confirmar tu cuenta. Después podrás iniciar sesión.';return;}
-  await activateAccount(result.user);
+  const accountLoad=activateAccount(result.user);
   const selectedFavorite=pendingFavorite,selectedProduct=pending;
   pendingFavorite=null;pending=null;$('#auth').close();
+  await accountLoad;
   if(selectedProduct)add(selectedProduct);
   if(selectedFavorite){
    if(favoritesStatus==='ready')await writeFavorite(getFinish(selectedFavorite.finish),getModel(selectedFavorite.model),true);
@@ -936,7 +946,12 @@ document.body.insertAdjacentHTML('beforeend',`<dialog id="image-dialog" aria-lab
 window.addEventListener('hashchange',()=>{const prev=document.querySelector('.product-detail');render(!prev||parseRoute()[0]!=='producto');});render();
 
 workspace=new PowerCaseWorkspace({accounts,capture:captureWorkspace,restore:restoreWorkspace,notify:workspaceNotice});
-workspace.open(null).then(()=>accounts.initialize(activateAccount)).catch(()=>{activateAccount(null);if($('#auth-status'))$('#auth-status').textContent='No pudimos recuperar tu sesión. Comprueba tu conexión e inicia sesión de nuevo.';});
+workspace.open(null).catch(()=>workspaceNotice('local-error'));
+const accountDocumentReady=document.readyState==='loading'?new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true})):Promise.resolve();
+accountInitialization=within(accountDocumentReady.then(()=>accounts.initialize(activateAccount)),'Session initialization timed out').catch(()=>{
+ if(!session)activateAccount(null);
+ if($('#auth-status'))$('#auth-status').textContent='No pudimos recuperar tu sesión. Comprueba tu conexión e inicia sesión de nuevo.';
+}).finally(()=>{accountInitializing=false;});
 document.addEventListener('click',event=>{
  if(event.target.closest('[data-workspace-retry]'))workspace.retry();
  const resolve=event.target.closest('[data-workspace-resolve]');
