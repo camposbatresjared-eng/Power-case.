@@ -350,9 +350,9 @@ function restoreWorkspace(data){
  lastStickerEdit={key:'',time:0};
 }
 function workspaceNotice(status){
- const messages={loading:'Recuperando tus diseños…',pending:'Cambios pendientes de guardar…',saving:'Guardando en tu cuenta…',saved:'Todo guardado en tu cuenta.',guest:'Borrador guardado en este navegador. Inicia sesión para guardarlo en tu cuenta.',offline:'No se pudo sincronizar con tu cuenta. Mantén la página abierta y reintenta el guardado.',conflict:'Hay otra versión guardada en tu cuenta. Elige cuál conservar.', 'local-error':'No se pudo guardar la copia local. Mantén abierta la página hasta que termine el guardado en tu cuenta.'};
+ const messages={loading:'Recuperando tus diseños…',pending:'Cambios pendientes de guardar…',saving:'Guardando en tu cuenta…',saved:'Todo guardado en tu cuenta.',guest:'',offline:'No se pudo sincronizar con tu cuenta. Mantén la página abierta y reintenta el guardado.',conflict:'Hay otra versión guardada en tu cuenta. Elige cuál conservar.', 'local-error':'No se pudo guardar la copia local. Mantén abierta la página hasta que termine el guardado en tu cuenta.'};
  const root=$('#workspace-status');
- root.hidden=status==='saved';root.dataset.state=status;
+ root.hidden=status==='saved'||status==='guest';root.dataset.state=status;
  root.querySelector('[data-workspace-message]').textContent=messages[status];
  root.querySelector('[data-workspace-retry]').hidden=status!=='offline';
  for(const button of root.querySelectorAll('[data-workspace-resolve]'))button.hidden=status!=='conflict';
