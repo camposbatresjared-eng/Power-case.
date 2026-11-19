@@ -5,7 +5,10 @@ const MODELS = [
  {id:'iphone15',name:'iPhone 15',brand:'Apple',prefix:'iphone15-base-rosa-',suffix:'-dos-vistas',views:2},
  {id:'s26',name:'Galaxy S26',brand:'Samsung',prefix:'samsung-s26-base-',suffix:'-dos-vistas',views:2},
  {id:'s26ultra',name:'Galaxy S26 Ultra',brand:'Samsung',prefix:'samsung-s26-ultra-',suffix:'-dos-vistas',views:2},
- {id:'pixel11',name:'Pixel 11 Pro XL',brand:'Google',prefix:'pixel11-pro-xl-',suffix:'-dos-vistas',views:2}
+ {id:'pixel11',name:'Pixel 11 Pro XL',brand:'Google',prefix:'pixel11-pro-xl-',suffix:'-dos-vistas',views:2},
+ {id:'ipad-pro-11-m5',name:'iPad Pro de 11 pulgadas (M5)',brand:'Apple',tablet:true,views:2},
+ {id:'galaxy-tab-s12-ultra',name:'Galaxy Tab S12 Ultra',brand:'Samsung',tablet:true,views:2},
+ {id:'xiaomi-pad-8',name:'Xiaomi Pad 8',brand:'Xiaomi',tablet:true,views:1}
 ];
 const FINISHES = [
  {id:'aura',name:'Aura',group:'reflejos',color:'#c9d99e',second:'#f3b0a4',copy:'Verde luminoso, destellos nacarados y un toque de coral. Un acabado que cambia con la luz.'},
@@ -28,4 +31,17 @@ const FINISHES = [
  {id:'mosaico',name:'Mosaico',group:'atelier',color:'#9dcbde',second:'#795744'}
 ];
 const GROUPS={reflejos:'Reflejos / Aura',lisos:'Essential',atelier:'Atelier / Patrones'};
-function asset(model,finish,size='large'){return `assets/catalog/${model.prefix}${finish.id}${model.suffix}${size==='thumb'?'-thumb':''}.webp`;}
+function asset(model,finish,size='large'){
+ const suffix=size==='thumb'?'-thumb':'';
+ if(model.tablet)return `assets/tabletas/${model.id}-${finish.id}${suffix}.jpg`;
+ return `assets/catalog/${model.prefix}${finish.id}${model.suffix}${suffix}.webp`;
+}
+const STUDIO_PHOTOS = {
+ iphone15: ["azul-tinta","boreal","bosque","coral","coral-liso","espiga","estelar","laguna","lila","lunares","mosaico","nacar","ondas","ritmo","rosa-perla"],
+ iphone16promax: ["azul-tinta","boreal","coral","coral-liso","espiga","estelar","laguna","lila","lunares","ritmo","rosa-perla"],
+ iphone17: ["azul-tinta","boreal","bosque","coral","coral-liso","espiga","estelar","laguna","lila","lunares","mosaico","nacar","ondas","ritmo","rosa-perla"],
+ iphone17promax: ["azul-tinta","boreal","bosque","coral","coral-liso","espiga","estelar","lila","lunares","mosaico","ondas","ritmo","rosa-perla"],
+ pixel11: ["azul-tinta","boreal","bosque","coral","coral-liso","espiga","estelar","laguna","lila","lunares","mosaico","nacar","ondas","ritmo","rosa-perla"],
+ s26: ["azul-tinta","boreal","bosque","coral","coral-liso","espiga","estelar","laguna","lila","lunares","mosaico","nacar","ondas","ritmo","rosa-perla"],
+ s26ultra: ["azul-tinta","boreal","bosque","coral","coral-liso","espiga","estelar","laguna","lila","lunares","mosaico","nacar","ondas","ritmo","rosa-perla"]
+};
