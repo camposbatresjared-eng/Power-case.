@@ -350,7 +350,7 @@ function restoreWorkspace(data){
  lastStickerEdit={key:'',time:0};
 }
 function workspaceNotice(status){
- const messages={loading:'Recuperando tus diseños…',pending:'Cambios pendientes de guardar…',saving:'Guardando en tu cuenta…',saved:'Todo guardado en tu cuenta.',guest:'',offline:'No se pudo sincronizar con tu cuenta. Mantén la página abierta y reintenta el guardado.',conflict:'Hay otra versión guardada en tu cuenta. Elige cuál conservar.', 'local-error':'No se pudo guardar la copia local. Mantén abierta la página hasta que termine el guardado en tu cuenta.'};
+ const messages={loading:'Recuperando tus diseños…',pending:'Cambios pendientes de guardar…',saving:'Guardando en tu cuenta…',saved:'Todo guardado en tu cuenta.',guest:'',offline:'No se pudo sincronizar con tu cuenta. Puedes seguir editando; reintenta la sincronización para guardar en tu cuenta.',conflict:'Hay otra versión guardada en tu cuenta. Elige cuál conservar.', 'local-error':'No se pudo guardar la copia local. Mantén abierta la página hasta que termine el guardado en tu cuenta.'};
  const root=$('#workspace-status');
  root.hidden=status==='saved'||status==='guest';root.dataset.state=status;
  root.querySelector('[data-workspace-message]').textContent=messages[status];

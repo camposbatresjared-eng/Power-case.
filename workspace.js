@@ -85,8 +85,13 @@ class PowerCaseWorkspace {
   await this.loadRemote(epoch);
  }
  async loadRemote(epoch=this.epoch){
+  let loadTimer;
   try{
-   const remote=await this.accounts.loadWorkspace(this.userId);
+   const remote=await Promise.race([
+    this.accounts.loadWorkspace(this.userId),
+    new Promise((resolve,reject)=>{loadTimer=setTimeout(()=>reject(new Error('Workspace load timed out')),12000);})
+   ]);
+   clearTimeout(loadTimer);
    if(epoch!==this.epoch)return;
    const local=this.localCandidate;
    this.version=remote.version;
@@ -105,6 +110,8 @@ class PowerCaseWorkspace {
    if(this.localCandidate?.data){this.restore(this.localCandidate.data);this.version=this.localCandidate.version;}
    this.dirty=Boolean(this.localCandidate?.pending);
    this.ready=false;this.notify('offline');
+  }finally{
+   clearTimeout(loadTimer);
   }
  }
  async flush(){
