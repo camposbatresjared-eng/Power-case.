@@ -158,13 +158,20 @@
 .repertoire-card label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .repertoire-card input[type="checkbox"] { appearance: auto; flex: 0 0 16px; width: 16px; height: 16px; }
 @media (max-width: 650px) {
-  .sticker-editor { grid-template-columns: 1fr; gap: 20px; }
-  .sticker-previews { grid-row: 1; position: sticky; top: 62px; z-index: 2; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 8px; padding-block: 8px; background: #fff; }
+  .sticker-editor { width: calc(100% - 32px); grid-template-columns: minmax(0,1fr); gap: 24px; }
+  .sticker-editor form { min-width: 0; }
+  .sticker-previews { grid-row: 1; position: static; display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.1fr); gap: 16px 12px; padding: 16px 0 24px; border-bottom: 1px solid var(--line); background: #fff; }
   .sticker-previews h2, .sticker-previews p { grid-column: 1 / -1; margin: 0; }
   .sticker-previews > .sticker-toolbar, .sticker-previews > .sticker-scene-list { grid-column: 1 / -1; margin-block: 4px; }
-  .sticker-previews figure { margin: 0; align-self: center; }
-  .sticker-previews .sticker-case { width: min(110px, 80%); }
-  .sticker-previews #sticker-preview { width: min(100%, 130px); justify-self: center; }
+  .sticker-previews figure { min-width: 0; margin: 0; align-self: start; }
+  .sticker-previews figcaption { font-size: 12px; line-height: 1.5; }
+  .sticker-previews .sticker-case { width: min(160px, 100%); }
+  .sticker-previews #sticker-preview { width: min(100%, 180px); justify-self: center; align-self: start; }
+  .sticker-previews > .sticker-toolbar { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .sticker-previews > .sticker-toolbar button:last-child { grid-column: 1 / -1; }
+  .sticker-editor .sticker-toolbar button, .sticker-scene-list button { min-height: 44px; }
+  .sticker-editor input:not([type="color"]):not([type="checkbox"]), .sticker-editor select { font-size: 16px; }
+  .sticker-photo-upload > span:nth-of-type(2) { min-width: 0; }
 }
 .product-card { position: relative; }
 .product-card-link { display: block; }
