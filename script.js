@@ -24,6 +24,7 @@ const modelGroups=m=>Object.entries(GROUPS).filter(([id])=>!m.tablet||id!=='atel
 function readFavorites(rows){
  const result=new Map();
  for(const item of rows||[]){
+  if(item?.model_id==='accessory'){if(getAccessory(item.finish_id))result.set(`accessory/${item.finish_id}`,{accessory:item.finish_id});continue;}
   const model=MODELS.find(model=>model.id===item?.model_id);
   if(model&&modelFinishes(model).some(finish=>finish.id===item.finish_id))result.set(`${model.id}/${item.finish_id}`,{model:model.id,finish:item.finish_id});
  }
@@ -32,17 +33,19 @@ function readFavorites(rows){
 let favorites=new Map();
 const favoriteKey=(f,m)=>`${m.id}/${f.id}`;
 const favoriteHeart=()=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>';
+function favoriteSelection(finish,model){return model==='accessory'?{f:getAccessory(finish),m:{id:'accessory',name:ACCESSORY_CATEGORIES[getAccessory(finish)?.category]?.singular||'Accesorio'}}:{f:getFinish(finish),m:getModel(model)};}
+function favoriteLabel(f,m,saved){return m.id==='accessory'?`${saved?'Quitar de':'Añadir a'} favoritos ${m.name} ${f.name}`:`${saved?'Quitar de':'Añadir a'} favoritos ${f.name} para ${m.name}`;}
 function favoriteButton(f,m,detail=false){
  const saved=favorites.has(favoriteKey(f,m));
  const label=`${saved?'Quitar de':'Añadir a'} favoritos ${f.name} para ${m.name}`;
  return `<button type="button" class="favorite-toggle ${detail?'favorite-detail':'favorite-card'}" data-favorite-finish="${f.id}" data-favorite-model="${m.id}" aria-pressed="${saved}" aria-label="${safe(label)}" title="${saved?'Quitar de favoritos':'Añadir a favoritos'}">${favoriteHeart()}${detail?`<span>${saved?'Guardado en favoritos':'Guardar en favoritos'}</span>`:''}</button>`;
 }
 function favoritesContent(){
- if(!session)return `<div class="favorites-empty">${favoriteHeart()}<h2>Guarda tus favoritos en tu cuenta.</h2><p>Inicia sesión para guardar y recuperar tus fundas favoritas.</p><button type="button" class="button dark" data-favorites-login>Iniciar sesión</button></div>`;
+ if(!session)return `<div class="favorites-empty">${favoriteHeart()}<h2>Guarda tus favoritos en tu cuenta.</h2><p>Inicia sesión para guardar y recuperar tus productos favoritos.</p><button type="button" class="button dark" data-favorites-login>Iniciar sesión</button></div>`;
  if(favoritesStatus==='loading')return '<p class="empty" role="status">Cargando tus favoritos…</p>';
  if(favoritesStatus==='error')return '<div class="favorites-empty"><p role="status">No pudimos cargar tus favoritos. Inténtalo de nuevo.</p><button type="button" class="button dark" data-favorites-retry>Reintentar</button></div>';
- if(!favorites.size)return `<div class="favorites-empty">${favoriteHeart()}<h2>Aún no tienes favoritos.</h2><p>Toca el corazón de una funda para guardarla aquí.</p><a class="button dark" href="#/coleccion">Explorar fundas</a></div>`;
- return `<div class="catalog-summary"><p>${favorites.size===1?'1 funda guardada':`${favorites.size} fundas guardadas`}</p><a class="text-link" href="#/coleccion">Seguir explorando</a></div><div class="product-grid">${[...favorites.values()].reverse().map(item=>card(getFinish(item.finish),getModel(item.model))).join('')}</div>`;
+ if(!favorites.size)return `<div class="favorites-empty">${favoriteHeart()}<h2>Aún no tienes favoritos.</h2><p>Toca el corazón de una funda o un accesorio para guardarlo aquí.</p><a class="button dark" href="#/coleccion">Explorar fundas</a></div>`;
+ return `<div class="catalog-summary"><p>${favorites.size===1?'1 producto guardado':`${favorites.size} productos guardados`}</p><a class="text-link" href="#/coleccion">Seguir explorando</a></div><div class="product-grid">${[...favorites.values()].reverse().map(item=>item.accessory?accessoryCard(getAccessory(item.accessory)):card(getFinish(item.finish),getModel(item.model))).join('')}</div>`;
 }
 function favoritesPage(){
  return `<section class="page-heading"><h1>Mis favoritos.</h1><p>Tu selección, vinculada a tu cuenta Power Case.</p></section><section class="catalog favorites-catalog" id="favorites-content">${favoritesContent()}</section>`;
@@ -50,14 +53,14 @@ function favoritesPage(){
 function syncFavorites(){
  const link=$('#favorites-link');
  link.innerHTML=`${favoriteHeart()}<span id="favorites-count" ${favorites.size?'':'hidden'}>${favorites.size}</span>`;
- link.setAttribute('aria-label',`Ver favoritos${favorites.size?`, ${favorites.size} ${favorites.size===1?'funda guardada':'fundas guardadas'}`:''}`);
+ link.setAttribute('aria-label',`Ver favoritos${favorites.size?`, ${favorites.size} ${favorites.size===1?'producto guardado':'productos guardados'}`:''}`);
  if(parseRoute()[0]==='favoritos')link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
  document.querySelectorAll('[data-favorite-finish]').forEach(button=>{
-  const f=getFinish(button.dataset.favoriteFinish),m=getModel(button.dataset.favoriteModel);
+  const {f,m}=favoriteSelection(button.dataset.favoriteFinish,button.dataset.favoriteModel);
   const saved=favorites.has(favoriteKey(f,m));
   button.setAttribute('aria-pressed',saved);
   button.disabled=Boolean(session&&(favoritesStatus==='loading'||favoriteWrites.has(favoriteKey(f,m))));
-  button.setAttribute('aria-label',`${saved?'Quitar de':'Añadir a'} favoritos ${f.name} para ${m.name}`);
+  button.setAttribute('aria-label',favoriteLabel(f,m,saved));
   button.title=saved?'Quitar de favoritos':'Añadir a favoritos';
   const text=button.querySelector('span');
   if(text)text.textContent=saved?'Guardado en favoritos':'Guardar en favoritos';
@@ -107,13 +110,13 @@ async function writeFavorite(f,m,save){
  try{
   if(save)await accounts.saveFavorite(userId,m.id,f.id);else await accounts.removeFavorite(userId,m.id,f.id);
   if(session?.id!==userId||revision!==accountRevision)return;
-  if(save)favorites.set(key,{model:m.id,finish:f.id});else favorites.delete(key);
+  if(save)favorites.set(key,m.id==='accessory'?{accessory:f.id}:{model:m.id,finish:f.id});else favorites.delete(key);
   refreshFavorites();
   if(index>=0){
    const next=document.querySelectorAll('#favorites-content [data-favorite-finish]');
    (next[Math.min(index,next.length-1)]||$('#favorites-content a'))?.focus({preventScroll:true});
   }
-  toast(save?'Funda guardada en tu cuenta.':'Funda eliminada de favoritos.');
+  toast(save?'Producto guardado en tu cuenta.':'Producto eliminado de favoritos.');
  }catch{
   if(session?.id===userId&&revision===accountRevision)toast('No se pudo guardar el cambio. Inténtalo de nuevo.');
  }finally{
@@ -125,7 +128,8 @@ document.addEventListener('click',async event=>{
  if(event.target.closest('[data-favorites-retry]')){favoritesLoad=loadAccountFavorites();return;}
  const button=event.target.closest('[data-favorite-finish]');
  if(!button)return;
- const f=getFinish(button.dataset.favoriteFinish),m=getModel(button.dataset.favoriteModel);
+ const {f,m}=favoriteSelection(button.dataset.favoriteFinish,button.dataset.favoriteModel);
+ if(!f)return;
  if(!session&&accountInitializing)await accountInitialization;
  if(!session){pendingFavorite={finish:f.id,model:m.id};account();return;}
  if(favoritesStatus==='error')await loadAccountFavorites();
@@ -194,7 +198,7 @@ window.addEventListener('scroll',()=>{
  sceneFrame=requestAnimationFrame(()=>{scene.style.setProperty('--scene-shift',`${-Math.min(scrollY*.055,30)}px`);sceneFrame=0;});
 },{passive:true});
 reducedMotion.addEventListener('change',()=>{document.getAnimations().forEach(a=>a.cancel());if(sceneObserver)sceneObserver.disconnect();});
-function render(scroll=true){const route=parseRoute();let page='inicio',content;const oldY=scrollY;if(route[0]==='coleccion'){page='coleccion';modelId=getModel(route[1]||modelId).id;group=modelGroups(getModel(modelId)).some(([id])=>id===route[2])?route[2]:'todo';content=collection();}else if(route[0]==='producto'){page='coleccion';const alias={atelier:'ondas',reflejos:'aura'};const m=getModel(route[2]||modelId);const f=modelFinishes(m).find(finish=>finish.id===(alias[route[1]]||route[1]))||FINISHES[0];modelId=m.id;content=product(f,m);document.title=`${f.name} | POWER CASE`;}else if(route[0]==='accesorios'){page='accesorios';content=accessoriesPage(route[1]);}else if(route[0]==='personalizacion'){page='personalizacion';content=personalization();}else if(route[0]==='favoritos'){page='favoritos';content=favoritesPage();}else if(route[0]==='care'){page='care';content=care();}else content=home();$('#app').innerHTML=`<div class="view">${content}</div>`;document.querySelectorAll('[data-page]').forEach(a=>{a.classList.toggle('active',a.dataset.page===page);if(a.dataset.page===page)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});closeMenu();if(route[0]!=='producto')document.title=`${page==='coleccion'?'Colección':page==='accesorios'?'Accesorios':page==='personalizacion'?'Personalización':page==='favoritos'?'Favoritos':page==='care'?'Power Care':'Energía con personalidad'} | POWER CASE`;window.scrollTo(0,scroll?0:oldY);setupExperience(page==='inicio');setupProductGallery();syncFavorites();if(page==='personalizacion')setupStickerEditor();if(workspace)workspaceNotice($('#workspace-status').dataset.state||'guest');}
+function render(scroll=true){const route=parseRoute();let page='inicio',content;const oldY=scrollY;if(route[0]==='coleccion'){page='coleccion';modelId=getModel(route[1]||modelId).id;group=modelGroups(getModel(modelId)).some(([id])=>id===route[2])?route[2]:'todo';content=collection();}else if(route[0]==='producto'){page='coleccion';const alias={atelier:'ondas',reflejos:'aura'};const m=getModel(route[2]||modelId);const f=modelFinishes(m).find(finish=>finish.id===(alias[route[1]]||route[1]))||FINISHES[0];modelId=m.id;content=product(f,m);document.title=`${f.name} | POWER CASE`;}else if(route[0]==='accesorio'){page='accesorios';const item=getAccessory(route[1])||ACCESSORIES[0];content=accessoryDetail(item.id);document.title=`${ACCESSORY_CATEGORIES[item.category].singular} ${item.name} | POWER CASE`;}else if(route[0]==='accesorios'){page='accesorios';content=accessoriesPage(route[1]);}else if(route[0]==='personalizacion'){page='personalizacion';content=personalization();}else if(route[0]==='favoritos'){page='favoritos';content=favoritesPage();}else if(route[0]==='care'){page='care';content=care();}else content=home();$('#app').innerHTML=`<div class="view">${content}</div>`;document.querySelectorAll('[data-page]').forEach(a=>{a.classList.toggle('active',a.dataset.page===page);if(a.dataset.page===page)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});closeMenu();if(!['producto','accesorio'].includes(route[0]))document.title=`${page==='coleccion'?'Colección':page==='accesorios'?'Accesorios':page==='personalizacion'?'Personalización':page==='favoritos'?'Favoritos':page==='care'?'Power Care':'Energía con personalidad'} | POWER CASE`;window.scrollTo(0,scroll?0:oldY);setupExperience(page==='inicio');setupProductGallery();syncFavorites();if(page==='personalizacion')setupStickerEditor();if(workspace)workspaceNotice($('#workspace-status').dataset.state||'guest');}
 function closeMenu(){$('#nav').classList.remove('open');$('#menu').setAttribute('aria-expanded','false');}
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('visible');clearTimeout(timer);timer=setTimeout(()=>$('#toast').classList.remove('visible'),3500);}
 function authMode(m){
@@ -935,7 +939,7 @@ $('#auth-form').addEventListener('submit',async event=>{
   await accountLoad;
   if(selectedProduct)add(selectedProduct);
   if(selectedFavorite){
-   if(favoritesStatus==='ready')await writeFavorite(getFinish(selectedFavorite.finish),getModel(selectedFavorite.model),true);
+   if(favoritesStatus==='ready'){const {f,m}=favoriteSelection(selectedFavorite.finish,selectedFavorite.model);if(f)await writeFavorite(f,m,true);}
    else toast('Sesión iniciada. No pudimos recuperar tus favoritos. Puedes reintentar desde Mis favoritos.');
   }else if(!selectedProduct)toast('Sesión iniciada.');
  }catch(error){
@@ -952,7 +956,7 @@ $('#auth').addEventListener('cancel',()=>{pending=null;pendingFavorite=null;});$
 for(const [id,name] of [['account','UserRound'],['bag','ShoppingBag'],['menu','Menu']]){const b=$('#'+id);b.innerHTML=icon(name)+(id==='bag'?'<span id="count">0</span>':'');}
 document.querySelectorAll('.close').forEach(b=>b.innerHTML=icon('X'));
 document.body.insertAdjacentHTML('beforeend',`<dialog id="image-dialog" aria-label="Imagen ampliada"><button class="close" data-close="image-dialog" aria-label="Cerrar imagen">${icon('X')}</button><div id="image-dialog-content"></div></dialog>`);
-window.addEventListener('hashchange',()=>{const prev=document.querySelector('.product-detail');render(!prev||parseRoute()[0]!=='producto');});render();
+window.addEventListener('hashchange',()=>{const prev=document.querySelector('.product-detail');render(!prev||!['producto','accesorio'].includes(parseRoute()[0]));});render();
 
 workspace=new PowerCaseWorkspace({accounts,capture:captureWorkspace,restore:restoreWorkspace,notify:workspaceNotice});
 workspace.open(null).catch(()=>workspaceNotice('local-error'));
