@@ -1,6 +1,6 @@
 const ACCESSORY_CATEGORIES={
  carteras:{name:'Carteras magnéticas',singular:'Cartera magnética',price:200},
- soportes:{name:'Soportes de agarre',singular:'Soporte de agarre',price:90},
+ soportes:{name:'PopSocket',singular:'PopSocket',price:90},
  llaveros:{name:'Llaveros para funda',singular:'Llavero para funda',price:45}
 };
 const ACCESSORIES=[
@@ -343,9 +343,9 @@ const ACCESSORIES=[
 ];
 const getAccessory=id=>ACCESSORIES.find(item=>item.id===id);
 const accessoryPrice=item=>`$${item.price.toFixed(2)} MXN`;
-function accessoriesPage(category='todo'){
- if(!Object.hasOwn(ACCESSORY_CATEGORIES,category))category='todo';
- const products=ACCESSORIES.filter(item=>category==='todo'||item.category===category);
- return `<section class="accessories-heading"><span class="eyebrow">ACCESORIOS POWER CASE</span><h1>Hazlo tuyo.</h1><p>Carteras magnéticas, soportes de agarre y llaveros. Encuentra los detalles que van contigo.</p><div class="accessories-category-links">${Object.entries(ACCESSORY_CATEGORIES).map(([id,c])=>`<a href="#/accesorios/${id}"><span>${c.name}</span><strong>$${c.price.toFixed(2)} MXN</strong></a>`).join('')}</div></section>
- <section class="accessories-catalog" aria-label="Catálogo de accesorios"><nav class="accessories-filters" aria-label="Categorías de accesorios"><a href="#/accesorios" ${category==='todo'?'aria-current="page"':''}>Todos <span>${ACCESSORIES.length}</span></a>${Object.entries(ACCESSORY_CATEGORIES).map(([id,c])=>`<a href="#/accesorios/${id}" ${category===id?'aria-current="page"':''}>${c.name} <span>${ACCESSORIES.filter(item=>item.category===id).length}</span></a>`).join('')}</nav><div class="accessories-summary"><h2>${category==='todo'?'Todos los accesorios':ACCESSORY_CATEGORIES[category].name}</h2><p>${products.length} diseños · Precios en MXN</p></div><div class="accessories-grid">${products.map(item=>`<article class="accessory-card"><button class="accessory-image" type="button" data-gallery-zoom aria-label="Ampliar ${ACCESSORY_CATEGORIES[item.category].singular} ${item.name}"><img src="${item.image}" alt="${ACCESSORY_CATEGORIES[item.category].singular} Power Case ${item.name}" width="720" height="720" loading="lazy" decoding="async"></button><div class="accessory-card-copy"><span class="accessory-category">${ACCESSORY_CATEGORIES[item.category].singular} · ${item.number}</span><h3>${item.name}</h3><p class="accessory-price">${accessoryPrice(item)}</p><button class="button dark full" type="button" data-add-accessory data-accessory="${item.id}" aria-label="Añadir ${ACCESSORY_CATEGORIES[item.category].singular} ${item.name} a la bolsa">Añadir a la bolsa</button></div></article>`).join('')}</div></section>`;
+function accessoriesPage(category='carteras'){
+ if(!Object.hasOwn(ACCESSORY_CATEGORIES,category))category='carteras';
+ const products=ACCESSORIES.filter(item=>item.category===category);
+ return `<section class="accessories-heading"><span class="eyebrow">ACCESORIOS POWER CASE</span><h1>Hazlo tuyo.</h1><p>Carteras magnéticas, PopSocket y llaveros. Encuentra los detalles que van contigo.</p></section>
+ <section class="accessories-catalog" aria-label="Catálogo de accesorios"><nav class="accessories-filters" aria-label="Categorías de accesorios">${Object.entries(ACCESSORY_CATEGORIES).map(([id,c])=>`<a href="#/accesorios/${id}" ${category===id?'aria-current="page"':''}>${c.name} <span>${ACCESSORIES.filter(item=>item.category===id).length}</span></a>`).join('')}</nav><div class="accessories-summary"><h2>${ACCESSORY_CATEGORIES[category].name}</h2><p>${products.length} diseños · Precios en MXN</p></div><div class="accessories-grid">${products.map(item=>`<article class="accessory-card"><button class="accessory-image" type="button" data-gallery-zoom aria-label="Ampliar ${ACCESSORY_CATEGORIES[item.category].singular} ${item.name}"><img src="${item.image}" alt="${ACCESSORY_CATEGORIES[item.category].singular} Power Case ${item.name}" width="720" height="720" loading="lazy" decoding="async"></button><div class="accessory-card-copy"><span class="accessory-category">${ACCESSORY_CATEGORIES[item.category].singular} · ${item.number}</span><h3>${item.name}</h3><p class="accessory-price">${accessoryPrice(item)}</p><button class="button dark full" type="button" data-add-accessory data-accessory="${item.id}" aria-label="Añadir ${ACCESSORY_CATEGORIES[item.category].singular} ${item.name} a la bolsa">Añadir a la bolsa</button></div></article>`).join('')}</div></section>`;
 }
