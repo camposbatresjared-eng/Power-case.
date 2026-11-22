@@ -175,7 +175,7 @@ function care(){return `<section class="page-heading care-heading"><span class="
 ['¿Cómo encuentro mi modelo?','En Colección puedes seleccionar tu teléfono y descubrir los acabados disponibles para ese modelo. Elige tu combinación y conoce todos sus detalles.'],
 ['¿El círculo es la batería?','No. Es un agarre desplegable incluido, con acabado a juego. La batería va dentro del cuerpo de la funda y tiene un botón de activación independiente.'],
 ['¿Necesito una cuenta?','Puedes explorar todas las colecciones sin cuenta. El acceso se solicita cuando quieres guardar una funda en tu selección.'],
-['¿Qué garantía tendrá?','Las condiciones de garantía, devoluciones y envío se publicarán antes del inicio de ventas.']].map(([q,a])=>`<details><summary>${q}</summary><p>${a}</p></details>`).join('')}</div></section>`;}
+['¿Qué garantía tendrá?','Las condiciones de garantía, devoluciones y envío se publicarán antes del inicio de ventas.']].map(([q,a])=>`<details><summary>${q}</summary><p>${a}</p></details>`).join('')}<div class="care-social"><span class="eyebrow">POWER CASE EN INSTAGRAM</span><h2>Sigamos en contacto.</h2><p>@power.case2</p><a class="button dark" href="https://www.instagram.com/power.case2/" target="_blank" rel="noopener noreferrer" aria-label="Visitar el Instagram de Power Case en una nueva pestaña">Visitar Instagram <span aria-hidden="true">↗</span></a></div></div></section>`;}
 function parseRoute(){const parts=location.hash.replace(/^#\/?/,'').split('/');return parts;}
 let sceneObserver=null,sceneFrame=0;
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
