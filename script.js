@@ -199,7 +199,7 @@ window.addEventListener('scroll',()=>{
 },{passive:true});
 reducedMotion.addEventListener('change',()=>{document.getAnimations().forEach(a=>a.cancel());if(sceneObserver)sceneObserver.disconnect();});
 function render(scroll=true){const route=parseRoute();let page='inicio',content;const oldY=scrollY;if(route[0]==='coleccion'){page='coleccion';modelId=getModel(route[1]||modelId).id;group=modelGroups(getModel(modelId)).some(([id])=>id===route[2])?route[2]:'todo';content=collection();}else if(route[0]==='producto'){page='coleccion';const alias={atelier:'ondas',reflejos:'aura'};const m=getModel(route[2]||modelId);const f=modelFinishes(m).find(finish=>finish.id===(alias[route[1]]||route[1]))||FINISHES[0];modelId=m.id;content=product(f,m);document.title=`${f.name} | POWER CASE`;}else if(route[0]==='accesorio'){page='accesorios';const item=getAccessory(route[1])||ACCESSORIES[0];content=accessoryDetail(item.id);document.title=`${ACCESSORY_CATEGORIES[item.category].singular} ${item.name} | POWER CASE`;}else if(route[0]==='accesorios'){page='accesorios';content=accessoriesPage(route[1]);}else if(route[0]==='personalizacion'){page='personalizacion';content=route[1]==='carteras'?walletPersonalization():personalization();}else if(route[0]==='favoritos'){page='favoritos';content=favoritesPage();}else if(route[0]==='care'){page='care';content=care();}else content=home();$('#app').innerHTML=`<div class="view">${content}</div>`;document.querySelectorAll('[data-page]').forEach(a=>{a.classList.toggle('active',a.dataset.page===page);if(a.dataset.page===page)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});closeMenu();if(!['producto','accesorio'].includes(route[0]))document.title=`${page==='coleccion'?'Colección':page==='accesorios'?'Accesorios':page==='personalizacion'?'Personalización':page==='favoritos'?'Favoritos':page==='care'?'Power Care':'Energía con personalidad'} | POWER CASE`;window.scrollTo(0,scroll?0:oldY);setupExperience(page==='inicio');setupProductGallery();syncFavorites();if(page==='personalizacion'){if($('#wallet-form'))setupWalletEditor();else setupStickerEditor();}if(workspace)workspaceNotice($('#workspace-status').dataset.state||'guest');}
-function closeMenu(){$('#nav').classList.remove('open');$('#menu').setAttribute('aria-expanded','false');}
+function closeMenu(){$('#nav').classList.remove('open');document.body.classList.remove('menu-open');$('#menu').setAttribute('aria-expanded','false');$('#menu').setAttribute('aria-label','Abrir menú');}
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('visible');clearTimeout(timer);timer=setTimeout(()=>$('#toast').classList.remove('visible'),3500);}
 function authMode(m){
  mode=m;const signup=m==='signup';
@@ -958,7 +958,7 @@ $('#auth').addEventListener('cancel',()=>{pending=null;pendingFavorite=null;});$
  try{await accounts.signOut();await activateAccount(null);$('#profile').close();toast('Sesión cerrada.');}
  catch{toast('No pudimos cerrar la sesión. Comprueba tu conexión e inténtalo de nuevo.');}
  finally{button.disabled=false;}
-};$('#menu').onclick=()=>{const open=$('#nav').classList.toggle('open');$('#menu').setAttribute('aria-expanded',open);};document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
+};$('#menu').onclick=()=>{const open=$('#nav').classList.toggle('open');document.body.classList.toggle('menu-open',open);$('#menu').setAttribute('aria-expanded',open);$('#menu').setAttribute('aria-label',open?'Cerrar menú':'Abrir menú');};document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
 for(const [id,name] of [['account','UserRound'],['bag','ShoppingBag'],['menu','Menu']]){const b=$('#'+id);b.innerHTML=icon(name)+(id==='bag'?'<span id="count">0</span>':'');}
 document.querySelectorAll('.close').forEach(b=>b.innerHTML=icon('X'));
 document.body.insertAdjacentHTML('beforeend',`<dialog id="image-dialog" aria-label="Imagen ampliada"><button class="close" data-close="image-dialog" aria-label="Cerrar imagen">${icon('X')}</button><div id="image-dialog-content"></div></dialog>`);
@@ -976,3 +976,6 @@ document.addEventListener('click',event=>{
  const resolve=event.target.closest('[data-workspace-resolve]');
  if(resolve)workspace.resolve(resolve.dataset.workspaceResolve);
 });
+
+$('#nav').addEventListener('click',event=>{if(event.target===$('#nav'))closeMenu();});
+window.matchMedia('(max-width:650px)').addEventListener('change',event=>{if(!event.matches)closeMenu();});

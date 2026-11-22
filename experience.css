@@ -8,3 +8,12 @@ body.home-view header{background:#080808ed;color:#f5f5f7;border-bottom-color:#ff
 @media(max-width:360px){.hero-scene{height:420px}.cinematic-hero h1{font-size:33px}.cinematic-hero .hero-tagline{font-size:21px}.cinematic-hero .hero-copy{padding-top:29px}}
 @media(max-width:650px){.cinematic-hero:has(.case3d.ready) .hero-scene{height:450px;margin-bottom:75px}.stage-controls{gap:16px;bottom:24px}.stage-status{min-width:85px;gap:7px}.stage-swatches{gap:8px}.stage-swatches button{width:22px;height:22px}.stage-finish{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.home-view .hero-copy,.home-view .hero-scene picture{animation:none!important}.hero-scene{transform:none!important;will-change:auto}*,*::before,*::after{transition:none!important}}
+
+/* Mobile navigation: full-screen frosted background without a dropdown panel. */
+@media(max-width:650px){
+ body.menu-open{overflow:hidden}
+ body.menu-open #app,body.menu-open>footer{filter:blur(13px);pointer-events:none;user-select:none}
+ header #nav.open{position:absolute;top:62px;left:0;right:0;height:calc(100vh - 62px);height:calc(100dvh - 62px);min-height:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:flex-start;gap:0;padding:20px 6% calc(28px + env(safe-area-inset-bottom,0px));background:rgba(255,255,255,.44);border:0;border-radius:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+ body.home-view header #nav.open{background:rgba(8,8,10,.48)}
+ header #nav.open a{flex-shrink:0;min-height:49px}
+}
