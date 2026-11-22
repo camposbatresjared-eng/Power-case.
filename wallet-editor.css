@@ -20,5 +20,19 @@
 .wallet-pattern-facets{background:conic-gradient(from 45deg,var(--wallet-accent) 0 90deg,var(--wallet-background) 0 270deg,var(--wallet-accent) 0)}
 .wallet-pattern-circuit{background:linear-gradient(90deg,transparent 40%,var(--wallet-accent) 40% 48%,transparent 48%),linear-gradient(0deg,transparent 60%,var(--wallet-accent) 60% 68%,transparent 68%),var(--wallet-background);background-size:15px 20px}
 .wallet-pattern-aurora{background:linear-gradient(135deg,var(--wallet-background),var(--wallet-accent))}
+.wallet-pattern-grid{background:linear-gradient(var(--wallet-accent) 1px,transparent 1px),linear-gradient(90deg,var(--wallet-accent) 1px,transparent 1px),var(--wallet-background);background-size:10px 10px}
+.wallet-pattern-chevron,.wallet-pattern-herringbone{background:linear-gradient(135deg,var(--wallet-accent) 25%,transparent 25%) -8px 0,linear-gradient(225deg,var(--wallet-accent) 25%,transparent 25%) -8px 0,linear-gradient(315deg,var(--wallet-accent) 25%,transparent 25%),linear-gradient(45deg,var(--wallet-accent) 25%,transparent 25%),var(--wallet-background);background-size:16px 16px}
+.wallet-pattern-herringbone{background-size:10px 18px;transform:rotate(0)}
+.wallet-pattern-honeycomb{background:repeating-conic-gradient(from 30deg,var(--wallet-accent) 0 5deg,var(--wallet-background) 5deg 60deg);background-size:16px 20px}
+.wallet-pattern-scales{background:repeating-radial-gradient(circle at 50% 0,transparent 0 6px,var(--wallet-accent) 7px 9px,var(--wallet-background) 10px 13px)}
+.wallet-pattern-terrazzo{background:conic-gradient(from 40deg,transparent 0 75%,var(--wallet-accent) 0) 0 0/13px 16px var(--wallet-background)}
+.wallet-pattern-sunburst{background:repeating-conic-gradient(from 20deg,var(--wallet-accent) 0 15deg,var(--wallet-background) 15deg 30deg)}
+.wallet-pattern-plaid{background:repeating-linear-gradient(0deg,transparent 0 7px,var(--wallet-accent) 8px 12px,transparent 13px 19px),repeating-linear-gradient(90deg,transparent 0 7px,var(--wallet-accent) 8px 12px,transparent 13px 19px),var(--wallet-background)}
+.wallet-pattern-rings{background:repeating-radial-gradient(circle at 40% 45%,var(--wallet-background) 0 4px,var(--wallet-accent) 5px 6px)}
+.wallet-pattern-topography{background:repeating-radial-gradient(ellipse at 30% 60%,var(--wallet-background) 0 3px,var(--wallet-accent) 4px 5px)}
+.wallet-pattern-diamonds{background:conic-gradient(from 45deg,var(--wallet-accent) 25%,var(--wallet-background) 0 75%,var(--wallet-accent) 0);background-size:16px 16px}
+.wallet-pattern-dashes{background:repeating-linear-gradient(45deg,transparent 0 4px,var(--wallet-accent) 5px 7px,transparent 8px 14px) 0 0/14px 14px var(--wallet-background)}
+.wallet-editor .wallet-brand-auto{display:flex;align-items:center;gap:10px;font-size:12px;line-height:1.5}
+.wallet-brand-auto input[type=checkbox]{appearance:auto;width:17px;height:17px;margin:0;padding:0;accent-color:#000;flex:0 0 17px}
 .wallet-editor-actions{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:28px}.wallet-editor .note{font-size:11px}
 @media(max-width:650px){.wallet-editor{grid-template-columns:minmax(0,1fr);gap:28px;width:calc(100% - 32px);margin-bottom:40px}.wallet-preview{padding:14px}.wallet-preview canvas{max-width:340px;margin:auto}.wallet-editor h2{font-size:28px}.personalization-tabs{width:calc(100% - 32px)}.personalization-tabs a{font-size:13px;padding:12px 16px}}
