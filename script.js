@@ -198,7 +198,7 @@ window.addEventListener('scroll',()=>{
  sceneFrame=requestAnimationFrame(()=>{scene.style.setProperty('--scene-shift',`${-Math.min(scrollY*.055,30)}px`);sceneFrame=0;});
 },{passive:true});
 reducedMotion.addEventListener('change',()=>{document.getAnimations().forEach(a=>a.cancel());if(sceneObserver)sceneObserver.disconnect();});
-function render(scroll=true){const route=parseRoute();let page='inicio',content;const oldY=scrollY;if(route[0]==='coleccion'){page='coleccion';modelId=getModel(route[1]||modelId).id;group=modelGroups(getModel(modelId)).some(([id])=>id===route[2])?route[2]:'todo';content=collection();}else if(route[0]==='producto'){page='coleccion';const alias={atelier:'ondas',reflejos:'aura'};const m=getModel(route[2]||modelId);const f=modelFinishes(m).find(finish=>finish.id===(alias[route[1]]||route[1]))||FINISHES[0];modelId=m.id;content=product(f,m);document.title=`${f.name} | POWER CASE`;}else if(route[0]==='accesorio'){page='accesorios';const item=getAccessory(route[1])||ACCESSORIES[0];content=accessoryDetail(item.id);document.title=`${ACCESSORY_CATEGORIES[item.category].singular} ${item.name} | POWER CASE`;}else if(route[0]==='accesorios'){page='accesorios';content=accessoriesPage(route[1]);}else if(route[0]==='personalizacion'){page='personalizacion';content=personalization();}else if(route[0]==='favoritos'){page='favoritos';content=favoritesPage();}else if(route[0]==='care'){page='care';content=care();}else content=home();$('#app').innerHTML=`<div class="view">${content}</div>`;document.querySelectorAll('[data-page]').forEach(a=>{a.classList.toggle('active',a.dataset.page===page);if(a.dataset.page===page)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});closeMenu();if(!['producto','accesorio'].includes(route[0]))document.title=`${page==='coleccion'?'Colección':page==='accesorios'?'Accesorios':page==='personalizacion'?'Personalización':page==='favoritos'?'Favoritos':page==='care'?'Power Care':'Energía con personalidad'} | POWER CASE`;window.scrollTo(0,scroll?0:oldY);setupExperience(page==='inicio');setupProductGallery();syncFavorites();if(page==='personalizacion')setupStickerEditor();if(workspace)workspaceNotice($('#workspace-status').dataset.state||'guest');}
+function render(scroll=true){const route=parseRoute();let page='inicio',content;const oldY=scrollY;if(route[0]==='coleccion'){page='coleccion';modelId=getModel(route[1]||modelId).id;group=modelGroups(getModel(modelId)).some(([id])=>id===route[2])?route[2]:'todo';content=collection();}else if(route[0]==='producto'){page='coleccion';const alias={atelier:'ondas',reflejos:'aura'};const m=getModel(route[2]||modelId);const f=modelFinishes(m).find(finish=>finish.id===(alias[route[1]]||route[1]))||FINISHES[0];modelId=m.id;content=product(f,m);document.title=`${f.name} | POWER CASE`;}else if(route[0]==='accesorio'){page='accesorios';const item=getAccessory(route[1])||ACCESSORIES[0];content=accessoryDetail(item.id);document.title=`${ACCESSORY_CATEGORIES[item.category].singular} ${item.name} | POWER CASE`;}else if(route[0]==='accesorios'){page='accesorios';content=accessoriesPage(route[1]);}else if(route[0]==='personalizacion'){page='personalizacion';content=route[1]==='carteras'?walletPersonalization():personalization();}else if(route[0]==='favoritos'){page='favoritos';content=favoritesPage();}else if(route[0]==='care'){page='care';content=care();}else content=home();$('#app').innerHTML=`<div class="view">${content}</div>`;document.querySelectorAll('[data-page]').forEach(a=>{a.classList.toggle('active',a.dataset.page===page);if(a.dataset.page===page)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});closeMenu();if(!['producto','accesorio'].includes(route[0]))document.title=`${page==='coleccion'?'Colección':page==='accesorios'?'Accesorios':page==='personalizacion'?'Personalización':page==='favoritos'?'Favoritos':page==='care'?'Power Care':'Energía con personalidad'} | POWER CASE`;window.scrollTo(0,scroll?0:oldY);setupExperience(page==='inicio');setupProductGallery();syncFavorites();if(page==='personalizacion'){if($('#wallet-form'))setupWalletEditor();else setupStickerEditor();}if(workspace)workspaceNotice($('#workspace-status').dataset.state||'guest');}
 function closeMenu(){$('#nav').classList.remove('open');$('#menu').setAttribute('aria-expanded','false');}
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('visible');clearTimeout(timer);timer=setTimeout(()=>$('#toast').classList.remove('visible'),3500);}
 function authMode(m){
@@ -335,10 +335,11 @@ function normalizedEditor(raw){
 }
 function captureWorkspace(){
  syncSceneSticker();
- return {format:1,editor:stickerSnapshot(),undo:structuredClone(stickerUndo),redo:structuredClone(stickerRedo),bag:structuredClone(bag),counters:{nextStickerId,nextSceneId,nextSymbolId},modelId,group};
+ return {format:1,walletDraft:{...walletDraft},editor:stickerSnapshot(),undo:structuredClone(stickerUndo),redo:structuredClone(stickerRedo),bag:structuredClone(bag),counters:{nextStickerId,nextSceneId,nextSymbolId},modelId,group};
 }
 function restoreWorkspace(data){
  if(data&&data.format!==1)throw new Error('Unsupported workspace version');
+ restoreWalletDraft(data?.walletDraft);
  const editor=normalizedEditor(data?.editor);
  stickerPhotoRequest++;stickerPhotoBusy=false;stickerDrag=null;
  stickerWorking=editor.working;sceneStickers=editor.scene;
@@ -370,7 +371,7 @@ function workspaceNotice(status){
  root.querySelector('[data-workspace-message]').textContent=messages[status];
  root.querySelector('[data-workspace-retry]').hidden=status!=='offline';
  for(const button of root.querySelectorAll('[data-workspace-resolve]'))button.hidden=status!=='conflict';
- for(const section of document.querySelectorAll('.sticker-editor,.saved-stickers'))section.inert=status==='loading';
+ for(const section of document.querySelectorAll('.sticker-editor,.saved-stickers,.wallet-editor'))section.inert=status==='loading';
  $('#bag').disabled=false;
  const purchase=$('#purchase');if(purchase)purchase.disabled=status==='loading';
  for(const button of document.querySelectorAll('[data-add-accessory]'))button.disabled=status==='loading';
@@ -435,7 +436,7 @@ function customStickerList(){
  return customStickers.map(sticker=>`<article class="custom-sticker-card">${stickerPreview(sticker)}<button type="button" class="text-link" data-add-saved-case-sticker="${sticker.id}">Añadir a la funda</button><button type="button" class="text-link" data-delete-sticker="${sticker.id}" aria-label="Eliminar sticker ${safe(stickerName(sticker))}">Eliminar</button></article>`).join('');
 }
 function personalization(){
- return `<section class="page-heading"><h1>Personalización</h1></section>
+ return `<section class="page-heading"><h1>Personalización</h1></section>${personalizationTabs('stickers')}
  <section class="sticker-editor" id="editor-stickers">
  <form id="sticker-form">
   <div class="sticker-toolbar" role="group" aria-label="Historial del diseño"><button type="button" data-sticker-undo disabled>↶ Deshacer</button><button type="button" data-sticker-redo disabled>↷ Rehacer</button></div>
