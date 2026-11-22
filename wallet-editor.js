@@ -38,11 +38,11 @@ function walletPattern(context,background,accent,pattern,size){
  if(pattern==='diamonds'){for(let y=-60;y<size+60;y+=85)for(let x=-60;x<size+60;x+=85){context.beginPath();context.moveTo(x,y-27);context.lineTo(x+23,y);context.lineTo(x,y+27);context.lineTo(x-23,y);context.closePath();context.fill();}}
  if(pattern==='dashes'){context.lineWidth=7;context.lineCap='round';for(let y=20;y<size;y+=52)for(let x=10;x<size;x+=57){const shift=(Math.round(y/52)%2)*22;context.beginPath();context.moveTo(x+shift,y);context.lineTo(x+shift+18,y+18);context.stroke();}context.lineCap='butt';}
 }
-async function drawWallet(){
- const canvas=document.querySelector('#wallet-canvas');if(!canvas)return;
+async function drawWallet(canvas=document.querySelector('#wallet-canvas'),savedDraft=null){
+ if(!canvas)return;
  try{
   const source=await walletSource();if(!canvas.isConnected)return;
-  const draft={...walletDraft},size=720,patternCanvas=document.createElement('canvas');patternCanvas.width=patternCanvas.height=size;const patternContext=patternCanvas.getContext('2d',{willReadFrequently:true});walletPattern(patternContext,draft.background,draft.accent,draft.pattern,size);const pattern=patternContext.getImageData(0,0,size,size).data;
+  const draft={...(savedDraft||walletDraft)},size=720,patternCanvas=document.createElement('canvas');patternCanvas.width=patternCanvas.height=size;const patternContext=patternCanvas.getContext('2d',{willReadFrequently:true});walletPattern(patternContext,draft.background,draft.accent,draft.pattern,size);const pattern=patternContext.getImageData(0,0,size,size).data;
   const result=new ImageData(new Uint8ClampedArray(source.data),size,size),color=draft.background.match(/[a-f0-9]{2}/gi).map(v=>parseInt(v,16));
   for(let y=0;y<size;y++)for(let x=0;x<size;x++){
    const offset=(y*size+x)*4;
@@ -58,10 +58,10 @@ async function drawWallet(){
    const panel=x>size*.215&&x<size*.785&&y<size*.899&&front;
    for(let c=0;c<3;c++){const tint=(panel?pattern[offset+c]:color[c])*shade;result.data[offset+c]=source.data[offset+c]*(1-amount)+tint*amount;}
   }
-  const context=canvas.getContext('2d');context.putImageData(result,0,0);paintWalletBrand(context,result,draft,size);canvas.setAttribute('aria-label',`Cartera Power Case personalizada: ${WALLET_PATTERNS[draft.pattern]}`);document.querySelector('#wallet-render-status').textContent='';
- }catch(error){if(canvas.isConnected)document.querySelector('#wallet-render-status').textContent='No se pudo generar la vista previa. Intenta abrir de nuevo esta sección.';}
+  const context=canvas.getContext('2d');context.putImageData(result,0,0);paintWalletBrand(context,result,draft,size,canvas,!savedDraft);canvas.setAttribute('aria-label',`Cartera Power Case personalizada: ${WALLET_PATTERNS[draft.pattern]}`);if(!savedDraft)document.querySelector('#wallet-render-status').textContent='';
+ }catch(error){if(!savedDraft&&canvas.isConnected)document.querySelector('#wallet-render-status').textContent='No se pudo generar la vista previa. Intenta abrir de nuevo esta sección.';}
 }
-function paintWalletBrand(context,image,draft,size){
+function paintWalletBrand(context,image,draft,size,canvas,editor){
  let light=0,samples=0;
  for(let y=Math.round(size*.79);y<size*.83;y+=2)for(let x=Math.round(size*.37);x<size*.64;x+=2){const i=(y*size+x)*4;light+=.2126*image.data[i]+.7152*image.data[i+1]+.0722*image.data[i+2];samples++;}
  const color=draft.brandAuto?(light/samples>145?'#161616':'#faf7f0'):draft.brandColor;
@@ -69,8 +69,8 @@ function paintWalletBrand(context,image,draft,size){
  const text='POWER CASE',spacing=2.6,width=[...text].reduce((sum,letter)=>sum+context.measureText(letter).width,0)+spacing*(text.length-1);
  let x=(size-width)/2;context.shadowColor=color==='#161616'?'#ffffff30':'#00000024';context.shadowOffsetY=.5;context.shadowBlur=.4;
  for(const letter of text){context.fillText(letter,x,size*.818);x+=context.measureText(letter).width+spacing;}context.restore();
- const canvas=document.querySelector('#wallet-canvas');if(canvas)canvas.dataset.brandColor=color;
- const picker=document.querySelector('#wallet-form input[name=brandColor]');if(draft.brandAuto&&picker)picker.value=color;
+ if(canvas)canvas.dataset.brandColor=color;
+ const picker=document.querySelector('#wallet-form input[name=brandColor]');if(editor&&draft.brandAuto&&picker)picker.value=color;
 }
 function setupWalletEditor(){
  const form=document.querySelector('#wallet-form');if(!form)return;
@@ -78,7 +78,7 @@ function setupWalletEditor(){
  for(const button of form.querySelectorAll('[data-wallet-color]'))button.setAttribute('aria-pressed',button.dataset.walletColor===walletDraft.background.toLowerCase());
  for(const button of form.querySelectorAll('[data-wallet-pattern]'))button.setAttribute('aria-pressed',button.dataset.walletPattern===walletDraft.pattern);
  form.style.setProperty('--wallet-background',walletDraft.background);form.style.setProperty('--wallet-accent',walletDraft.accent);
- cancelAnimationFrame(walletFrame);walletFrame=requestAnimationFrame(drawWallet);
+ cancelAnimationFrame(walletFrame);walletFrame=requestAnimationFrame(()=>drawWallet());
 }
 document.addEventListener('input',event=>{
  if(!event.target.closest('#wallet-form')||!['background','accent','brandColor','brandAuto'].includes(event.target.name))return;
@@ -88,5 +88,36 @@ document.addEventListener('click',async event=>{
  const palette=event.target.closest('[data-wallet-color]'),pattern=event.target.closest('[data-wallet-pattern]'),reset=event.target.closest('[data-wallet-reset]');
  if(palette||pattern||reset){walletDraft=reset?{...WALLET_DEFAULT}:{...walletDraft,...(palette?{background:palette.dataset.walletColor}:{pattern:pattern.dataset.walletPattern})};setupWalletEditor();workspace?.changed();}
  const download=event.target.closest('[data-wallet-download]');if(!download)return;
- download.disabled=true;try{await drawWallet();const canvas=document.querySelector('#wallet-canvas');const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('No image');const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`power-case-cartera-${walletDraft.pattern}.png`;link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);}catch{document.querySelector('#wallet-render-status').textContent='No se pudo descargar la vista previa. Inténtalo de nuevo.';}finally{download.disabled=false;}
+ if(!session&&accountInitializing)await accountInitialization;
+ if(!session){account();return;}
+ if(!workspace?.ready){toast('Espera a que termine de cargar tu cuenta.');return;}
+ download.disabled=true;
+ try{
+  const draft={...walletDraft};
+  if(!savedWallets.some(item=>JSON.stringify(item.draft)===JSON.stringify(draft)))savedWallets.push({id:'wallet-'+crypto.randomUUID(),draft});
+  workspace.changed();refreshFavorites();toast('Dise�o a�adido a tus favoritos.');
+ }catch{toast('No se pudo guardar el dise�o. Int�ntalo de nuevo.');}finally{download.disabled=false;}
+
+});
+
+let savedWallets=[];
+function normalizeWalletDesign(raw){
+ if(!raw||!/^wallet-[a-f0-9-]{36}$/.test(raw.id)||!raw.draft)return null;
+ const previous=walletDraft;restoreWalletDraft(raw.draft);const draft={...walletDraft};walletDraft=previous;return {id:raw.id,draft};
+}
+function walletDesignPreview(item){
+ const token=encodeURIComponent(JSON.stringify(item.draft));
+ queueMicrotask(renderSavedWallets);
+ return `<canvas width="720" height="720" data-wallet-preview="${safe(token)}" role="img" aria-label="Cartera personalizada: ${safe(WALLET_PATTERNS[item.draft.pattern])}"></canvas>`;
+}
+function renderSavedWallets(){
+ document.querySelectorAll('[data-wallet-preview]:not([data-painted])').forEach(canvas=>{canvas.dataset.painted='true';drawWallet(canvas,JSON.parse(decodeURIComponent(canvas.dataset.walletPreview)));});
+}
+function savedWalletCard(item){return `<article class="accessory-card">${walletDesignPreview(item)}<div class="accessory-card-copy"><span class="accessory-category">Cartera magn�tica personalizada</span><h3>${safe(WALLET_PATTERNS[item.draft.pattern])}</h3><p>$200.00 MXN</p><button type="button" class="button dark full" data-add-wallet="${item.id}">A�adir a la bolsa</button><button type="button" class="text-link" data-edit-wallet="${item.id}">Abrir dise�o</button><button type="button" class="text-link" data-delete-wallet="${item.id}">Quitar de favoritos</button></div></article>`;}
+document.addEventListener('click',event=>{
+ const button=event.target.closest('[data-add-wallet],[data-edit-wallet],[data-delete-wallet]');if(!button||!session)return;
+ const item=savedWallets.find(item=>item.id===(button.dataset.addWallet||button.dataset.editWallet||button.dataset.deleteWallet));if(!item)return;
+ if(button.hasAttribute('data-add-wallet'))add({wallet:structuredClone(item)});
+ if(button.hasAttribute('data-edit-wallet')){walletDraft={...item.draft};location.hash='/personalizacion/carteras';if(document.querySelector('#wallet-form'))setupWalletEditor();workspace?.changed();}
+ if(button.hasAttribute('data-delete-wallet')){savedWallets=savedWallets.filter(value=>value.id!==item.id);workspace?.changed();refreshFavorites();}
 });

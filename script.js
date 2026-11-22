@@ -44,15 +44,15 @@ function favoritesContent(){
  if(!session)return `<div class="favorites-empty">${favoriteHeart()}<h2>Guarda tus favoritos en tu cuenta.</h2><p>Inicia sesión para guardar y recuperar tus productos favoritos.</p><button type="button" class="button dark" data-favorites-login>Iniciar sesión</button></div>`;
  if(favoritesStatus==='loading')return '<p class="empty" role="status">Cargando tus favoritos…</p>';
  if(favoritesStatus==='error')return '<div class="favorites-empty"><p role="status">No pudimos cargar tus favoritos. Inténtalo de nuevo.</p><button type="button" class="button dark" data-favorites-retry>Reintentar</button></div>';
- if(!favorites.size)return `<div class="favorites-empty">${favoriteHeart()}<h2>Aún no tienes favoritos.</h2><p>Toca el corazón de una funda o un accesorio para guardarlo aquí.</p><a class="button dark" href="#/coleccion">Explorar fundas</a></div>`;
- return `<div class="catalog-summary"><p>${favorites.size===1?'1 producto guardado':`${favorites.size} productos guardados`}</p><a class="text-link" href="#/coleccion">Seguir explorando</a></div><div class="product-grid">${[...favorites.values()].reverse().map(item=>item.accessory?accessoryCard(getAccessory(item.accessory)):card(getFinish(item.finish),getModel(item.model))).join('')}</div>`;
+ if(!favorites.size&&!savedWallets.length)return `<div class="favorites-empty">${favoriteHeart()}<h2>Aún no tienes favoritos.</h2><p>Toca el corazón de una funda o un accesorio para guardarlo aquí.</p><a class="button dark" href="#/coleccion">Explorar fundas</a></div>`;
+ return `<div class="catalog-summary"><p>${favorites.size+savedWallets.length} productos guardados</p><a class="text-link" href="#/coleccion">Seguir explorando</a></div><div class="product-grid">${savedWallets.slice().reverse().map(savedWalletCard).join('')}${[...favorites.values()].reverse().map(item=>item.accessory?accessoryCard(getAccessory(item.accessory)):card(getFinish(item.finish),getModel(item.model))).join('')}</div>`;
 }
 function favoritesPage(){
  return `<section class="page-heading"><h1>Mis favoritos.</h1><p>Tu selección, vinculada a tu cuenta Power Case.</p></section><section class="catalog favorites-catalog" id="favorites-content">${favoritesContent()}</section>`;
 }
 function syncFavorites(){
  const link=$('#favorites-link');
- link.innerHTML=`${favoriteHeart()}<span id="favorites-count" ${favorites.size?'':'hidden'}>${favorites.size}</span>`;
+ link.innerHTML=`${favoriteHeart()}<span id="favorites-count" ${favorites.size+savedWallets.length?'':'hidden'}>${favorites.size+savedWallets.length}</span>`;
  link.setAttribute('aria-label',`Ver favoritos${favorites.size?`, ${favorites.size} ${favorites.size===1?'producto guardado':'productos guardados'}`:''}`);
  if(parseRoute()[0]==='favoritos')link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
  document.querySelectorAll('[data-favorite-finish]').forEach(button=>{
@@ -335,11 +335,13 @@ function normalizedEditor(raw){
 }
 function captureWorkspace(){
  syncSceneSticker();
- return {format:1,walletDraft:{...walletDraft},editor:stickerSnapshot(),undo:structuredClone(stickerUndo),redo:structuredClone(stickerRedo),bag:structuredClone(bag),counters:{nextStickerId,nextSceneId,nextSymbolId},modelId,group};
+ return {format:1,walletDraft:{...walletDraft},savedWallets:structuredClone(savedWallets),editor:stickerSnapshot(),undo:structuredClone(stickerUndo),redo:structuredClone(stickerRedo),bag:structuredClone(bag),counters:{nextStickerId,nextSceneId,nextSymbolId},modelId,group};
 }
 function restoreWorkspace(data){
  if(data&&data.format!==1)throw new Error('Unsupported workspace version');
  restoreWalletDraft(data?.walletDraft);
+ savedWallets=(Array.isArray(data?.savedWallets)?data.savedWallets:[]).map(normalizeWalletDesign).filter(Boolean);
+ refreshFavorites();
  const editor=normalizedEditor(data?.editor);
  stickerPhotoRequest++;stickerPhotoBusy=false;stickerDrag=null;
  stickerWorking=editor.working;sceneStickers=editor.scene;
@@ -348,10 +350,11 @@ function restoreWorkspace(data){
  stickerUndo.splice(0,stickerUndo.length,...(Array.isArray(data?.undo)?data.undo:[]).slice(-40).map(normalizedEditor));
  stickerRedo.splice(0,stickerRedo.length,...(Array.isArray(data?.redo)?data.redo:[]).slice(-40).map(normalizedEditor));
  bag=(Array.isArray(data?.bag)?data.bag:[]).filter(item=>{
+  if(item?.wallet)return Boolean(normalizeWalletDesign(item.wallet));
   if(item?.accessory)return Boolean(getAccessory(item.accessory));
   const model=MODELS.find(model=>model.id===item?.model);
   return model&&modelFinishes(model).some(finish=>finish.id===item.finish);
- }).map(item=>item.accessory?{accessory:item.accessory}:{model:item.model,finish:item.finish});
+ }).map(item=>item.wallet?{wallet:normalizeWalletDesign(item.wallet)}:item.accessory?{accessory:item.accessory}:{model:item.model,finish:item.finish});
  const all=[...sceneStickers,...customStickers,stickerWorking,...stickerUndo.flatMap(state=>[...state.scene,...state.saved,state.working]),...stickerRedo.flatMap(state=>[...state.scene,...state.saved,state.working])];
  const serial=(prefix,values,fallback)=>Math.max(Number.isSafeInteger(fallback)&&fallback>0?fallback:1,1,...values.map(value=>new RegExp(`^${prefix}-(\\d+)$`).exec(value)?.[1]).filter(Boolean).map(value=>Number(value)+1));
  nextSceneId=serial('scene',all.map(item=>item.sceneId),data?.counters?.nextSceneId);
@@ -916,6 +919,7 @@ $('#bag-content').addEventListener('change',event=>{
 function bagContent(){
  if(!bag.length)return '<p class="empty">Tu bolsa espera algo especial.</p><a class="button dark full" href="#/coleccion" id="bag-explore">Explorar colección</a><a class="text-link" href="#/accesorios" data-bag-accessories>Explorar accesorios</a><a class="text-link" href="#/personalizacion" data-customize-link>Diseñar mis propios stickers</a>';
  const rows=bag.map((item,i)=>{
+  if(item.wallet){return `<article class="bag-item">${walletDesignPreview(item.wallet)}<div><h3>Cartera personalizada</h3><p>${safe(WALLET_PATTERNS[item.wallet.draft.pattern])}</p><p>$200.00 MXN</p><button data-remove="${i}" aria-label="Eliminar cartera personalizada">Eliminar</button></div></article>`;}
   if(item.accessory){const a=getAccessory(item.accessory);if(!a)return '';return `<article class="bag-item"><img src="${a.image}" alt="${safe(a.name)}"><div><h3>${safe(a.name)}</h3><p>${ACCESSORY_CATEGORIES[a.category].singular}</p><p>${accessoryPrice(a)}</p><button data-remove="${i}" aria-label="Eliminar ${ACCESSORY_CATEGORIES[a.category].singular} ${safe(a.name)}">Eliminar</button></div></article>`;}
   const f=getFinish(item.finish),m=getModel(item.model);return `<article class="bag-item">${photo(m,f,true)}<div><h3>${f.name}</h3><p>${m.name}</p><p>${GROUPS[f.group]}</p><p>${casePrice(m)}</p><button data-remove="${i}" aria-label="Eliminar ${f.name} para ${m.name}">Eliminar</button></div></article>`;
  }).join('');

@@ -36,3 +36,5 @@
 .wallet-brand-auto input[type=checkbox]{appearance:auto;width:17px;height:17px;margin:0;padding:0;accent-color:#000;flex:0 0 17px}
 .wallet-editor-actions{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:28px}.wallet-editor .note{font-size:11px}
 @media(max-width:650px){.wallet-editor{grid-template-columns:minmax(0,1fr);gap:28px;width:calc(100% - 32px);margin-bottom:40px}.wallet-preview{padding:14px}.wallet-preview canvas{max-width:340px;margin:auto}.wallet-editor h2{font-size:28px}.personalization-tabs{width:calc(100% - 32px)}.personalization-tabs a{font-size:13px;padding:12px 16px}}
+
+.accessory-card>canvas{width:100%;height:auto;display:block}.bag-item>canvas{width:100%;max-width:100%;height:auto}
