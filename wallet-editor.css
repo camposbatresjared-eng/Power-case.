@@ -38,3 +38,46 @@
 @media(max-width:650px){.wallet-editor{grid-template-columns:minmax(0,1fr);gap:28px;width:calc(100% - 32px);margin-bottom:40px}.wallet-preview{padding:14px}.wallet-preview canvas{max-width:340px;margin:auto}.wallet-editor h2{font-size:28px}.personalization-tabs{width:calc(100% - 32px)}.personalization-tabs a{font-size:13px;padding:12px 16px}}
 
 .accessory-card>canvas{width:100%;height:auto;display:block}.bag-item>canvas{width:100%;max-width:100%;height:auto}
+
+.personalization-tabs{display:flex;position:static;gap:8px;flex-wrap:wrap;width:min(90%,960px);margin:0 auto 32px;padding:0;box-shadow:none;background:transparent}
+.personalization-tabs a{padding:12px 20px;border-radius:24px;background:#f3f3f5;color:#222;font-size:14px;min-height:44px}
+.personalization-tabs [aria-current=page]{background:#000;color:white}
+.pop-editor{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:45px;width:min(90%,1100px);margin:0 auto 70px;align-items:start}
+.pop-preview{min-width:0;padding:22px;background:#fafafa;border:1px solid #e4e4e4;border-radius:16px;text-align:center}
+.pop-preview .eyebrow{color:#666;font-size:10px}.pop-preview canvas{display:block;width:100%;height:auto;aspect-ratio:1;background:white;border-radius:10px}
+.pop-preview p{font-size:12px;color:#666}.pop-editor form{min-width:0}.pop-editor h2{font-size:32px;letter-spacing:-.03em;margin-bottom:14px}
+.pop-editor form>p{font-size:14px;color:#666}.pop-editor fieldset{margin-block:26px}.pop-editor legend{font-size:14px;font-weight:600}
+.pop-palette{display:flex;flex-wrap:wrap;gap:10px}.pop-palette button{display:grid;place-items:center;width:44px;height:44px;border:1px solid #ccc;border-radius:50%;padding:4px;background:white}
+.pop-palette span{width:32px;height:32px;background:var(--pop-color);border-radius:50%}.pop-palette [aria-pressed=true]{outline:2px solid black;outline-offset:2px}
+.pop-editor .pop-color-field{display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:13px;margin:18px 0}
+.pop-color-field input[type=color]{display:block;width:56px;height:40px;padding:3px;border:1px solid #ccc;border-radius:6px;margin:0;cursor:pointer}
+.pop-patterns{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.pop-patterns button{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 6px;border:1px solid #ddd;border-radius:10px;background:#fff;font-size:11px}
+.pop-patterns [aria-pressed=true]{border-color:#000;box-shadow:0 0 0 1px #000}.pop-pattern-icon{display:block;width:38px;height:38px;border-radius:6px;background:var(--pop-background)}
+.pop-pattern-stripes{background:repeating-linear-gradient(45deg,var(--pop-background) 0 5px,var(--pop-accent) 5px 9px)}
+.pop-pattern-checker{background:conic-gradient(var(--pop-background) 25%,var(--pop-accent) 0 50%,var(--pop-background) 0 75%,var(--pop-accent) 0);background-size:16px 16px}
+.pop-pattern-dots{background:radial-gradient(var(--pop-accent) 2px,transparent 3px) 0 0/12px 12px var(--pop-background)}
+.pop-pattern-waves{background:repeating-radial-gradient(ellipse at 0 100%,var(--pop-background) 0 5px,var(--pop-accent) 6px 10px)}
+.pop-pattern-facets{background:conic-gradient(from 45deg,var(--pop-accent) 0 90deg,var(--pop-background) 0 270deg,var(--pop-accent) 0)}
+.pop-pattern-circuit{background:linear-gradient(90deg,transparent 40%,var(--pop-accent) 40% 48%,transparent 48%),linear-gradient(0deg,transparent 60%,var(--pop-accent) 60% 68%,transparent 68%),var(--pop-background);background-size:15px 20px}
+.pop-pattern-aurora{background:linear-gradient(135deg,var(--pop-background),var(--pop-accent))}
+.pop-pattern-grid{background:linear-gradient(var(--pop-accent) 1px,transparent 1px),linear-gradient(90deg,var(--pop-accent) 1px,transparent 1px),var(--pop-background);background-size:10px 10px}
+.pop-pattern-chevron,.pop-pattern-herringbone{background:linear-gradient(135deg,var(--pop-accent) 25%,transparent 25%) -8px 0,linear-gradient(225deg,var(--pop-accent) 25%,transparent 25%) -8px 0,linear-gradient(315deg,var(--pop-accent) 25%,transparent 25%),linear-gradient(45deg,var(--pop-accent) 25%,transparent 25%),var(--pop-background);background-size:16px 16px}
+.pop-pattern-herringbone{background-size:10px 18px;transform:rotate(0)}
+.pop-pattern-honeycomb{background:repeating-conic-gradient(from 30deg,var(--pop-accent) 0 5deg,var(--pop-background) 5deg 60deg);background-size:16px 20px}
+.pop-pattern-scales{background:repeating-radial-gradient(circle at 50% 0,transparent 0 6px,var(--pop-accent) 7px 9px,var(--pop-background) 10px 13px)}
+.pop-pattern-terrazzo{background:conic-gradient(from 40deg,transparent 0 75%,var(--pop-accent) 0) 0 0/13px 16px var(--pop-background)}
+.pop-pattern-sunburst{background:repeating-conic-gradient(from 20deg,var(--pop-accent) 0 15deg,var(--pop-background) 15deg 30deg)}
+.pop-pattern-plaid{background:repeating-linear-gradient(0deg,transparent 0 7px,var(--pop-accent) 8px 12px,transparent 13px 19px),repeating-linear-gradient(90deg,transparent 0 7px,var(--pop-accent) 8px 12px,transparent 13px 19px),var(--pop-background)}
+.pop-pattern-rings{background:repeating-radial-gradient(circle at 40% 45%,var(--pop-background) 0 4px,var(--pop-accent) 5px 6px)}
+.pop-pattern-topography{background:repeating-radial-gradient(ellipse at 30% 60%,var(--pop-background) 0 3px,var(--pop-accent) 4px 5px)}
+.pop-pattern-diamonds{background:conic-gradient(from 45deg,var(--pop-accent) 25%,var(--pop-background) 0 75%,var(--pop-accent) 0);background-size:16px 16px}
+.pop-pattern-dashes{background:repeating-linear-gradient(45deg,transparent 0 4px,var(--pop-accent) 5px 7px,transparent 8px 14px) 0 0/14px 14px var(--pop-background)}
+.pop-editor .pop-brand-auto{display:flex;align-items:center;gap:10px;font-size:12px;line-height:1.5}
+.pop-brand-auto input[type=checkbox]{appearance:auto;width:17px;height:17px;margin:0;padding:0;accent-color:#000;flex:0 0 17px}
+.pop-editor-actions{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:28px}.pop-editor .note{font-size:11px}
+@media(max-width:650px){.pop-editor{grid-template-columns:minmax(0,1fr);gap:28px;width:calc(100% - 32px);margin-bottom:40px}.pop-preview{padding:14px}.pop-preview canvas{max-width:340px;margin:auto}.pop-editor h2{font-size:28px}.personalization-tabs{width:calc(100% - 32px)}.personalization-tabs a{font-size:13px;padding:12px 16px}}
+
+.accessory-card>canvas{width:100%;height:auto;display:block}.bag-item>canvas{width:100%;max-width:100%;height:auto}
+
+.pop-preview canvas{display:block;width:100%;height:auto}
