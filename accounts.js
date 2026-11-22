@@ -39,7 +39,9 @@ class PowerCaseAccounts {
  async signUp(name,email,password){
   const client=await this.client();
   const options={data:{full_name:name}};
-  if(location.protocol==='https:'||location.protocol==='http:')options.emailRedirectTo=location.origin+location.pathname;
+  const publicSites=['https://powercase1.netlify.app/','https://camposbatresjared-eng.github.io/Power-case./'];
+  const current=location.origin+location.pathname;
+  options.emailRedirectTo=publicSites.includes(current)?current:'https://powercase1.netlify.app/';
   const {data,error}=await client.auth.signUp({email,password,options});
   if(error)throw error;
   return data;
