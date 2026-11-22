@@ -1,4 +1,7 @@
 const $=s=>document.querySelector(s);
+const PERSONALIZATION_FEE=50;
+const mxn=amount=>`$${amount.toFixed(2)} MXN`;
+const personalizedWalletPrice=()=>mxn(ACCESSORY_CATEGORIES.carteras.price+PERSONALIZATION_FEE);
 const safe=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function icon(name){const nodes=ICONS[name]||[];return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${nodes.map(([tag,attrs])=>`<${tag} ${Object.entries(attrs).filter(([k])=>k!=='key').map(([k,v])=>`${k}="${v}"`).join(' ')}/>`).join('')}</svg>`;}
 const getModel=id=>MODELS.find(m=>m.id===id)||MODELS[0];
@@ -214,15 +217,16 @@ function authMode(m){
 async function account(){if(!session&&accountInitializing)await accountInitialization;if(session){$('#profile-title').textContent=`Hola, ${session.name}.`;$('#profile-email').textContent=session.email;$('#profile').showModal();}else{authMode('signin');$('#auth').showModal();}}
 function add(item){if(item.accessory&&!getAccessory(item.accessory))return;bag.push(item);$('#count').textContent=bag.length;workspace?.changed();toast(item.accessory?'Accesorio añadido a la bolsa.':'Tu Power Case se añadió a la selección.');}
 const STICKER_SHEETS = [
- ['kit-de-personalizacion','Kit de Personalización'],
- ['arcade-mode','Arcade Mode'],
- ['energy-kit','Energy Kit'],
- ['night-shift','Night Shift'],
- ['atelier','Atelier'],
- ['reflejos','Reflejos'],
- ['circuito-impulso-luces','Circuito, Impulso y Luces','circuito-impulso-luces.png'],
- ['mundos-power-case','Mundos Power Case','mundos-power-case.png'],
- ['retro-power-case','Retro Power Case','retro-power-case.png'],
+ ['repertorio-original','Energía Contigo','repertorio-original-hoja.png'],
+ ['kit-de-personalizacion','Código Propio','kit-de-personalizacion-hoja.png'],
+ ['arcade-mode','Arcade Mode','arcade-mode-hoja.png'],
+ ['energy-kit','Energy Kit','energy-kit-hoja.png'],
+ ['night-shift','Night Shift','night-shift-hoja.png'],
+ ['atelier','Atelier','atelier-hoja.png'],
+ ['reflejos','Reflejos','reflejos-hoja.png'],
+ ['circuito-impulso-luces','Circuito, Impulso y Luces','circuito-impulso-luces-hoja.png'],
+ ['mundos-power-case','Mundos Power Case','mundos-power-case-hoja.png'],
+ ['retro-power-case','Retro Power Case','retro-power-case-hoja.png'],
 ];
 const selectedStickers=new Set();
 const customStickers=[];
@@ -396,7 +400,10 @@ function stickerSymbolItems(sticker){
  return [{id:'legacy',type:sticker.symbol,point:sticker.positions.symbol||[50,45],size:sticker.symbolSize,width:sticker.symbolWidth,angle:sticker.symbolAngle,color:sticker.ink}];
 }
 const stickerOptions=choices=>Object.entries(choices).map(([id,label])=>`<option value="${id}">${Array.isArray(label)?label[0]:label}</option>`).join('');
-const stickerTotal=()=>selectedStickers.size===1?'1 opción seleccionada':`${selectedStickers.size} opciones seleccionadas`;
+const stickerTotal=()=>{
+ const count=customStickers.filter(sticker=>selectedStickers.has(sticker.id)).length;
+ return `${selectedStickers.size===1?'1 opción seleccionada':`${selectedStickers.size} opciones seleccionadas`}${count?` · Personalización: +${mxn(count*PERSONALIZATION_FEE)}`:''}`;
+};
 function stickerBorder(shape,proportion,color,width){
  const contour=stickerContours[shape];
  let edge='<ellipse cx="50" cy="50" rx="50" ry="50"/>';
@@ -447,7 +454,7 @@ function personalization(){
   <p class="note" id="sticker-photo-status" role="status">JPG, PNG o WebP, hasta 50 MB. La imagen se optimiza automáticamente.</p>
   <button type="button" class="text-link" data-remove-sticker-photo hidden>Quitar foto</button>
   <div class="sticker-toolbar" data-photo-tools hidden><button type="button" data-photo-original>Usar foto completa</button><button type="button" data-photo-background>Quitar fondo</button><button type="button" data-photo-restore hidden>Restaurar fondo</button></div>
-  <p class="note" data-photo-background-note hidden>La primera vez se descarga la herramienta de recorte. La foto se procesa en tu dispositivo.</p>
+  <div class="photo-background-loading" data-photo-background-loading role="status" hidden><span class="photo-background-spinner" aria-hidden="true"></span><span>Quitando fondo…</span></div>
   <label>Texto opcional <input name="text" type="text" maxlength="32" placeholder="Escribe tu frase"></label>
   <div class="sticker-selects">
    <label>Forma <select name="shape">${stickerOptions(stickerShapes)}</select></label>
@@ -464,6 +471,7 @@ function personalization(){
    ${Object.entries(stickerRanges).map(([key,[label,min,max,value]])=>`<label>${label} <output data-sticker-value="${key}"></output><input type="range" name="${key}" min="${min}" max="${max}" value="${value}"></label>`).join('')}
   </div>
   <button type="button" class="text-link" data-reset-sticker-position>Restablecer posiciones</button>
+  <p class="note">Personalización: +${mxn(PERSONALIZATION_FEE)} por sticker al añadirlo a tu selección. Guardar el diseño es gratis.</p>
   <button type="submit" class="button dark full">Guardar sticker</button>
  </form>
  <div class="sticker-previews"><h2>Vista previa</h2><p>Selecciona un símbolo para editarlo. Arrastra los elementos o usa las flechas del teclado.</p><div id="sticker-preview">${stickerPreview(stickerWorking,true)}</div>
@@ -510,7 +518,6 @@ function updateStickerPreview(){
  for(const name of ['borderColor','borderWidth'])form.elements.namedItem(name).disabled=!stickerWorking.borderEnabled;
  $('[data-remove-sticker-photo]').hidden=!stickerWorking.photo;
  $('[data-photo-tools]').hidden=!stickerWorking.photo;
- $('[data-photo-background-note]').hidden=!stickerWorking.photo;
  $('[data-photo-restore]').hidden=!stickerWorking.photoCutout;
  $('[data-photo-background]').disabled=stickerPhotoBusy||stickerWorking.photoCutout;
  form.querySelector('button[type="submit"]').disabled=stickerPhotoBusy;
@@ -659,6 +666,9 @@ async function removeStickerBackground(){
  const status=$('#sticker-photo-status');
  stickerPhotoBusy=true;
  updateStickerPreview();
+ const loading=$('[data-photo-background-loading]');
+ loading.hidden=false;
+ loading.setAttribute('aria-busy','true');
  status.textContent='Preparando recorte. La primera descarga puede tardar unos minutos…';
  try{
   stickerBackgroundModule??=import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm').catch(error=>{stickerBackgroundModule=null;throw error;});
@@ -679,6 +689,8 @@ async function removeStickerBackground(){
  }catch(error){
   if(request===stickerPhotoRequest&&status.isConnected)status.textContent='No se pudo quitar el fondo. Comprueba tu conexión y vuelve a intentarlo.';
  }finally{
+  loading.hidden=true;
+  loading.setAttribute('aria-busy','false');
   if(request===stickerPhotoRequest){stickerPhotoBusy=false;if(status.isConnected)updateStickerPreview();}
  }
 }
@@ -897,12 +909,7 @@ function bagStickers(){
  <label><input type="checkbox" data-sticker="${id}" ${selectedStickers.has(id)?'checked':''}> ${name}</label>
  </div>`).join('')}
  </fieldset>
- <fieldset class="bag-sticker-repertoire"><legend>Repertorio original</legend>
- <div class="repertoire-card">
- <button type="button" data-gallery-zoom aria-label="Ampliar el repertorio completo"><img src="assets/stickers/repertorio/referencia.png" alt="Lámina completa del repertorio original de Power Case" loading="lazy"></button>
- <label><input type="checkbox" data-sticker="repertorio-original" ${selectedStickers.has('repertorio-original')?'checked':''}> Añadir repertorio completo</label>
- </div></fieldset>
- ${customStickers.length?`<fieldset class="bag-sticker-options"><legend>Mis diseños</legend>${customStickers.map(sticker=>`<label class="bag-sticker-option">${stickerPreview(sticker)}<span><input type="checkbox" data-sticker="${sticker.id}" ${selectedStickers.has(sticker.id)?'checked':''}> ${safe(stickerName(sticker))}</span></label>`).join('')}</fieldset>`:''}
+ ${customStickers.length?`<fieldset class="bag-sticker-options"><legend>Mis diseños</legend>${customStickers.map(sticker=>`<label class="bag-sticker-option">${stickerPreview(sticker)}<span><input type="checkbox" data-sticker="${sticker.id}" ${selectedStickers.has(sticker.id)?'checked':''}> ${safe(stickerName(sticker))} · Personalización +${mxn(PERSONALIZATION_FEE)}</span></label>`).join('')}</fieldset>`:''}
  <a class="text-link" href="#/personalizacion" data-customize-link>Diseñar mis propios stickers</a>
  </details>`;
 }
@@ -919,7 +926,7 @@ $('#bag-content').addEventListener('change',event=>{
 function bagContent(){
  if(!bag.length)return '<p class="empty">Tu bolsa espera algo especial.</p><a class="button dark full" href="#/coleccion" id="bag-explore">Explorar colección</a><a class="text-link" href="#/accesorios" data-bag-accessories>Explorar accesorios</a><a class="text-link" href="#/personalizacion" data-customize-link>Diseñar mis propios stickers</a>';
  const rows=bag.map((item,i)=>{
-  if(item.wallet){return `<article class="bag-item">${walletDesignPreview(item.wallet)}<div><h3>Cartera personalizada</h3><p>${safe(WALLET_PATTERNS[item.wallet.draft.pattern])}</p><p>$200.00 MXN</p><button data-remove="${i}" aria-label="Eliminar cartera personalizada">Eliminar</button></div></article>`;}
+  if(item.wallet){return `<article class="bag-item">${walletDesignPreview(item.wallet)}<div><h3>Cartera personalizada</h3><p>${safe(WALLET_PATTERNS[item.wallet.draft.pattern])}</p><p>${personalizedWalletPrice()}</p><p>Incluye ${mxn(PERSONALIZATION_FEE)} de personalización.</p><button data-remove="${i}" aria-label="Eliminar cartera personalizada">Eliminar</button></div></article>`;}
   if(item.accessory){const a=getAccessory(item.accessory);if(!a)return '';return `<article class="bag-item"><img src="${a.image}" alt="${safe(a.name)}"><div><h3>${safe(a.name)}</h3><p>${ACCESSORY_CATEGORIES[a.category].singular}</p><p>${accessoryPrice(a)}</p><button data-remove="${i}" aria-label="Eliminar ${ACCESSORY_CATEGORIES[a.category].singular} ${safe(a.name)}">Eliminar</button></div></article>`;}
   const f=getFinish(item.finish),m=getModel(item.model);return `<article class="bag-item">${photo(m,f,true)}<div><h3>${f.name}</h3><p>${m.name}</p><p>${GROUPS[f.group]}</p><p>${casePrice(m)}</p><button data-remove="${i}" aria-label="Eliminar ${f.name} para ${m.name}">Eliminar</button></div></article>`;
  }).join('');
