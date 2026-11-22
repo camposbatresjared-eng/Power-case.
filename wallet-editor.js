@@ -95,8 +95,8 @@ document.addEventListener('click',async event=>{
  try{
   const draft={...walletDraft};
   if(!savedWallets.some(item=>JSON.stringify(item.draft)===JSON.stringify(draft)))savedWallets.push({id:'wallet-'+crypto.randomUUID(),draft});
-  workspace.changed();refreshFavorites();toast('Dise�o a�adido a tus favoritos.');
- }catch{toast('No se pudo guardar el dise�o. Int�ntalo de nuevo.');}finally{download.disabled=false;}
+  workspace.changed();refreshFavorites();toast('Diseño añadido a tus favoritos.');
+ }catch{toast('No se pudo guardar el diseño. Inténtalo de nuevo.');}finally{download.disabled=false;}
 
 });
 
@@ -113,7 +113,7 @@ function walletDesignPreview(item){
 function renderSavedWallets(){
  document.querySelectorAll('[data-wallet-preview]:not([data-painted])').forEach(canvas=>{canvas.dataset.painted='true';drawWallet(canvas,JSON.parse(decodeURIComponent(canvas.dataset.walletPreview)));});
 }
-function savedWalletCard(item){return `<article class="accessory-card">${walletDesignPreview(item)}<div class="accessory-card-copy"><span class="accessory-category">Cartera magn�tica personalizada</span><h3>${safe(WALLET_PATTERNS[item.draft.pattern])}</h3><p>$200.00 MXN</p><button type="button" class="button dark full" data-add-wallet="${item.id}">A�adir a la bolsa</button><button type="button" class="text-link" data-edit-wallet="${item.id}">Abrir dise�o</button><button type="button" class="text-link" data-delete-wallet="${item.id}">Quitar de favoritos</button></div></article>`;}
+function savedWalletCard(item){return `<article class="accessory-card">${walletDesignPreview(item)}<div class="accessory-card-copy"><span class="accessory-category">Cartera magnética personalizada</span><h3>${safe(WALLET_PATTERNS[item.draft.pattern])}</h3><p>$200.00 MXN</p><button type="button" class="button dark full" data-add-wallet="${item.id}">Añadir a la bolsa</button><button type="button" class="text-link" data-edit-wallet="${item.id}">Abrir diseño</button><button type="button" class="text-link" data-delete-wallet="${item.id}">Quitar de favoritos</button></div></article>`;}
 document.addEventListener('click',event=>{
  const button=event.target.closest('[data-add-wallet],[data-edit-wallet],[data-delete-wallet]');if(!button||!session)return;
  const item=savedWallets.find(item=>item.id===(button.dataset.addWallet||button.dataset.editWallet||button.dataset.deleteWallet));if(!item)return;
