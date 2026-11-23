@@ -34,3 +34,8 @@ body.home-view header{background:#080808ed;color:#f5f5f7;border-bottom-color:#ff
 .cinematic-hero .hero-scene{flex:none;height:auto;aspect-ratio:1672/651;margin-top:56px;transform:none;will-change:auto}
 @media(max-width:650px){.cinematic-hero .hero-copy{padding-top:29px}.cinematic-hero .hero-scene{height:340px;aspect-ratio:auto;margin-top:40px}}
 @media(max-width:360px){.cinematic-hero .hero-scene{height:300px}}
+/* Fit the complete five-case composition on every screen. */
+.cinematic-hero .hero-scene{width:min(100%,1200px);margin-inline:auto}
+.cinematic-hero .hero-art{width:100%;left:0}
+.aurora-toggle{position:absolute;right:18px;bottom:12px;z-index:3;padding:8px 12px;color:#ddd;background:#080808b3;border:1px solid #ffffff35;border-radius:20px;font-size:11px;min-height:36px}
+@media(max-width:650px){.cinematic-hero .hero-scene{width:100%;height:auto;aspect-ratio:1672/651;margin-top:38px}.cinematic-hero .hero-art{width:100%;left:0}.aurora-toggle{position:relative;display:block;margin:10px auto 0;right:auto;bottom:auto;min-height:40px}.cinematic-hero .hero-art{overflow:visible}.cinematic-hero .hero-scene{margin-bottom:50px}}
