@@ -31,9 +31,17 @@ const FINISHES = [
  {id:'mosaico',name:'Mosaico',group:'atelier',color:'#9dcbde',second:'#795744'}
 ];
 const GROUPS={reflejos:'Reflejos / Aura',lisos:'Essential',atelier:'Atelier / Patrones'};
+const ATELIER_REPLACEMENTS={
+ lunares:{name:'Fragmento',color:'#eee4d2',second:'#2d5846',galleryFolder:'fragmento',copy:'Fragmentos irregulares en verde bosque, terracota, lila y grafito sobre una base marfil. Un estampado arquitectónico con agarre a juego.'},
+ ondas:{name:'Entrelazado',color:'#bc4d32',second:'#45679c',galleryFolder:'entrelazado',copy:'Cintas en crema y azul se entrecruzan sobre un fondo terracota. Una trama gráfica que continúa por los bordes y el agarre.'},
+ espiga:{name:'Cartografía',color:'#202f48',second:'#81b3cd',galleryFolder:'cartografia',copy:'Líneas topográficas azul hielo y acentos cobre recorren una base azul profundo. Detalles finos que también envuelven el agarre.'},
+ ritmo:{name:'Herbario',color:'#583342',second:'#dfc2a0',galleryFolder:'herbario',copy:'Hojas de ginkgo y helechos en crema y rosa sobre un fondo ciruela. Un dibujo botánico de líneas delicadas, con agarre coordinado.'}
+};
+for(const finish of FINISHES)if(ATELIER_REPLACEMENTS[finish.id])Object.assign(finish,ATELIER_REPLACEMENTS[finish.id]);
 const REALISTIC_IPHONE_MODELS=['iphone15','iphone16promax','iphone17promax'];
 const REALISTIC_ANDROID_MODELS=['pixel11','s26ultra','s26'];
 function asset(model,finish,size='large'){
+ if(!model.tablet&&ATELIER_REPLACEMENTS[finish.id])return `assets/atelier-propuestas/${model.id}/${ATELIER_REPLACEMENTS[finish.id].galleryFolder}/01-con-telefono.webp`;
  if(REALISTIC_ANDROID_MODELS.includes(model.id))return `assets/android-realista/${model.id}/${finish.id}/01-con-telefono.webp`;
  if(REALISTIC_IPHONE_MODELS.includes(model.id))return `assets/iphone-realista/${model.id}/${finish.id}/01-con-telefono.webp`;
  if(model.id==='iphone17'&&finish.group==='reflejos')return `assets/reflejos-realista/iphone17/${finish.id}/01-con-telefono.webp`;

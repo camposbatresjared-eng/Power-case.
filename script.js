@@ -145,6 +145,11 @@ const STUDIO_FINISHES = {
  iphone17promax: ['nacar','laguna'],
 };
 function productGallery(f,m){
+ if(!m.tablet&&ATELIER_REPLACEMENTS[f.id]){
+  const folder=ATELIER_REPLACEMENTS[f.id].galleryFolder;
+  const views=[['01-con-telefono','Puesta en el teléfono'],['02-trasera','Funda vacía con agarre'],['03-agarre-separado','Agarre separado y extendido'],['04-interior','Interior']];
+  return `<div class="product-gallery case-gallery reflejos-gallery" aria-label="Vistas de ${f.name}"><div class="case-gallery-track" tabindex="0" aria-label="Galería de producto">${views.map(([file,label])=>`<button type="button" class="zoom-image" data-gallery-zoom data-view-label="${label}" aria-label="Ampliar vista: ${label}"><img src="assets/atelier-propuestas/${m.id}/${folder}/${file}.webp" alt="${f.name} para ${m.name}: ${label}" width="1000" height="1000" loading="lazy"></button>`).join('')}</div><div class="case-gallery-controls"><button type="button" data-gallery-prev aria-label="Vista anterior">${icon('ChevronLeft')}</button><p aria-live="polite"><span data-gallery-label>${views[0][1]}</span> <span data-gallery-count>1 / 4</span></p><button type="button" data-gallery-next aria-label="Vista siguiente">${icon('ChevronLeft')}</button></div></div>`;
+ }
  if(m.tablet)return `<div class="product-gallery tablet-gallery"><button type="button" class="zoom-image" data-gallery-zoom aria-label="Ampliar funda puesta en la tableta">${photo(m,f)}</button></div>`;
  const updatedIphone=REALISTIC_IPHONE_MODELS.includes(m.id);
  const updatedAndroid=REALISTIC_ANDROID_MODELS.includes(m.id);
