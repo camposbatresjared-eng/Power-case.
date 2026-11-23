@@ -20,7 +20,7 @@ const favoriteWrites=new Set();
 const modelOptions=id=>[['Teléfonos',false],['Tabletas',true]].map(([label,tablet])=>`<optgroup label="${label}">${MODELS.filter(m=>Boolean(m.tablet)===tablet).map(m=>`<option value="${m.id}" ${m.id===id?'selected':''}>${m.name}</option>`).join('')}</optgroup>`).join('');
 const productUrl=(f,m)=>`#/producto/${f.id}/${m.id}`;
 const swatchStyle=f=>`--c:${f.color};--d:${f.second||f.color}`;
-function photo(m,f,thumb=false){return `<img src="${asset(m,f,thumb?'thumb':'large')}" ${thumb?`srcset="${asset(m,f,'thumb')} 600w, ${asset(m,f)} 1400w" sizes="(max-width:600px) 45vw, (max-width:1000px) 30vw, 320px" loading="lazy"`:''} alt="Power Case ${f.name} para ${m.name}${m.views===2?', vista trasera y en ángulo':''}" ${m.tablet?'':`width="${m.views===2?1448:868}" height="${m.views===2?1086:1812}"`}>`;}
+function photo(m,f,thumb=false){if(REALISTIC_ANDROID_MODELS.includes(m.id))return `<img src="${asset(m,f)}" alt="Power Case ${f.name} instalada en ${m.name}" width="608" height="608" ${thumb?'loading="lazy"':''}>`;if(REALISTIC_IPHONE_MODELS.includes(m.id))return `<img src="${asset(m,f)}" alt="Power Case ${f.name} instalada en ${m.name}" width="608" height="608" ${thumb?'loading="lazy"':''}>`;if(m.id==='iphone17'&&f.group==='reflejos')return `<img src="${asset(m,f)}" alt="Power Case ${f.name} instalada en ${m.name}" width="608" height="608" ${thumb?'loading="lazy"':''}>`;if(m.id==='iphone17'&&f.group==='lisos')return `<img src="${asset(m,f)}" alt="Power Case ${f.name} instalada en ${m.name}" width="552" height="552" ${thumb?'loading="lazy"':''}>`;if(m.id==='iphone17'&&f.group==='atelier')return `<img src="${asset(m,f)}" alt="Power Case ${f.name} instalada en ${m.name}" width="552" height="552" ${thumb?'loading="lazy"':''}>`;return `<img src="${asset(m,f,thumb?'thumb':'large')}" ${thumb?`srcset="${asset(m,f,'thumb')} 600w, ${asset(m,f)} 1400w" sizes="(max-width:600px) 45vw, (max-width:1000px) 30vw, 320px" loading="lazy"`:''} alt="Power Case ${f.name} para ${m.name}${m.views===2?', vista trasera y en ángulo':''}" ${m.tablet?'':`width="${m.views===2?1448:868}" height="${m.views===2?1086:1812}"`}>`;}
 const casePrice=m=>m.tablet?'Precio por confirmar':'$499.00 MXN';
 const modelFinishes=m=>m.tablet?FINISHES.filter(f=>f.group!=='atelier'):FINISHES;
 const modelGroups=m=>Object.entries(GROUPS).filter(([id])=>!m.tablet||id!=='atelier');
@@ -146,18 +146,25 @@ const STUDIO_FINISHES = {
 };
 function productGallery(f,m){
  if(m.tablet)return `<div class="product-gallery tablet-gallery"><button type="button" class="zoom-image" data-gallery-zoom aria-label="Ampliar funda puesta en la tableta">${photo(m,f)}</button></div>`;
- const photographed=STUDIO_PHOTOS[m.id]?.includes(f.id);
+ const updatedIphone=REALISTIC_IPHONE_MODELS.includes(m.id);
+ const updatedAndroid=REALISTIC_ANDROID_MODELS.includes(m.id);
+ const updatedPhone=updatedIphone||updatedAndroid;
+ const photographed=updatedPhone||STUDIO_PHOTOS[m.id]?.includes(f.id);
  const studio=photographed||['grafito','alba','aura'].includes(f.id)||STUDIO_FINISHES[m.id]?.includes(f.id);
  const mounted={label:'Puesta en el teléfono',markup:photo(m,f)};
  if(!studio&&m.views===1){
   return `<div class="product-gallery single"><button type="button" class="zoom-image" data-gallery-zoom aria-label="Ampliar vista: ${mounted.label}">${mounted.markup}</button></div>`;
  }
- const views=studio?CASE_VIEWS:[CASE_VIEWS[0],['02-angulo','En ángulo']];
- const directory=photographed?'vistas-estudio':studio?'vistas':'vistas-originales';
+ const reflejos=(m.id==='iphone17'||updatedPhone)&&f.group==='reflejos';
+ const essential=updatedPhone||(m.id==='iphone17'&&(f.group==='lisos'||reflejos));
+ const realistic=updatedPhone||(m.id==='iphone17'&&(f.group==='atelier'||essential));
+ const views=essential?[['01-con-telefono','Puesta en el teléfono'],['02-trasera','Trasera con agarre'],['03-angulo','En ángulo'],['04-sin-agarre','Sin agarre'],['05-agarre-separado','Agarre separado'],['06-interior','Interior']]:realistic?[['01-trasera','Trasera con agarre'],['02-angulo-derecho','Ángulo derecho'],['03-angulo-izquierdo','Ángulo izquierdo'],['04-sin-agarre','Sin agarre'],['05-agarre-separado','Agarre separado'],['06-interior','Interior']]:studio?CASE_VIEWS:[CASE_VIEWS[0],['02-angulo','En ángulo']];
+ const directory=updatedAndroid?'android-realista':updatedIphone?'iphone-realista':reflejos?'reflejos-realista':essential?'essential-realista':realistic?'atelier-realista':photographed?'vistas-estudio':studio?'vistas':'vistas-originales';
+ if(realistic&&!essential)views.unshift(['00-con-telefono','Puesta en el teléfono']);
  const images=views.map(([file,label],index)=>({label,markup:`<img src="assets/${directory}/${m.id}/${f.id}/${file}.webp" alt="${f.name} para ${m.name}: ${label}" width="600" height="600" ${studio||index>0?'loading="lazy"':''}>`}));
- if(studio)images.unshift(mounted);
+ if(studio&&!realistic)images.unshift(mounted);
  const slides=images.map(({label,markup})=>`<button type="button" class="zoom-image" data-gallery-zoom data-view-label="${label}" aria-label="Ampliar vista: ${label}">${markup}</button>`).join('');
- return `<div class="product-gallery case-gallery" aria-label="Vistas de ${f.name}"><div class="case-gallery-track" tabindex="0" aria-label="Galería de producto">${slides}</div><div class="case-gallery-controls"><button type="button" data-gallery-prev aria-label="Vista anterior" title="Vista anterior">${icon('ChevronLeft')}</button><p aria-live="polite"><span data-gallery-label>${images[0].label}</span> <span data-gallery-count>1 / ${images.length}</span></p><button type="button" data-gallery-next aria-label="Vista siguiente" title="Vista siguiente">${icon('ChevronLeft')}</button></div></div>`;
+ return `<div class="product-gallery case-gallery ${reflejos||updatedPhone?'reflejos-gallery':''}" aria-label="Vistas de ${f.name}"><div class="case-gallery-track" tabindex="0" aria-label="Galería de producto">${slides}</div><div class="case-gallery-controls"><button type="button" data-gallery-prev aria-label="Vista anterior" title="Vista anterior">${icon('ChevronLeft')}</button><p aria-live="polite"><span data-gallery-label>${images[0].label}</span> <span data-gallery-count>1 / ${images.length}</span></p><button type="button" data-gallery-next aria-label="Vista siguiente" title="Vista siguiente">${icon('ChevronLeft')}</button></div></div>`;
 }
 function setupProductGallery(){
  const gallery=$('.case-gallery');if(!gallery)return;

@@ -31,7 +31,14 @@ const FINISHES = [
  {id:'mosaico',name:'Mosaico',group:'atelier',color:'#9dcbde',second:'#795744'}
 ];
 const GROUPS={reflejos:'Reflejos / Aura',lisos:'Essential',atelier:'Atelier / Patrones'};
+const REALISTIC_IPHONE_MODELS=['iphone15','iphone16promax','iphone17promax'];
+const REALISTIC_ANDROID_MODELS=['pixel11','s26ultra','s26'];
 function asset(model,finish,size='large'){
+ if(REALISTIC_ANDROID_MODELS.includes(model.id))return `assets/android-realista/${model.id}/${finish.id}/01-con-telefono.webp`;
+ if(REALISTIC_IPHONE_MODELS.includes(model.id))return `assets/iphone-realista/${model.id}/${finish.id}/01-con-telefono.webp`;
+ if(model.id==='iphone17'&&finish.group==='reflejos')return `assets/reflejos-realista/iphone17/${finish.id}/01-con-telefono.webp`;
+ if(model.id==='iphone17'&&finish.group==='lisos')return `assets/essential-realista/iphone17/${finish.id}/01-con-telefono.webp`;
+ if(model.id==='iphone17'&&finish.group==='atelier')return `assets/atelier-realista/iphone17/${finish.id}/00-con-telefono.webp`;
  const suffix=size==='thumb'?'-thumb':'';
  if(model.tablet)return `assets/tabletas/${model.id}-${finish.id}${suffix}.jpg`;
  return `assets/catalog/${model.prefix}${finish.id}${model.suffix}${suffix}.webp`;
