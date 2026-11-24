@@ -31,6 +31,20 @@ const FINISHES = [
  {id:'mosaico',name:'Mosaico',group:'atelier',color:'#9dcbde',second:'#795744'}
 ];
 const GROUPS={reflejos:'Reflejos / Aura',lisos:'Essential',atelier:'Atelier / Patrones'};
+const FLORAL_FINISHES=[
+ {id:'margarita',name:'Margarita',group:'atelier',color:'#edc56b',second:'#fff2d6',galleryBase:'flora',copy:'Margaritas en crema sobre amarillo suave, con centros terracota y tallos verde salvia. Un estampado luminoso que continúa en el agarre.'},
+ {id:'amapola',name:'Amapola',group:'atelier',color:'#f1e6d2',second:'#c9472b',galleryBase:'flora',copy:'Amapolas rojas de pétalos amplios y trazos delicados sobre una base marfil. El agarre retoma el dibujo floral.'},
+ {id:'jardin-nocturno',name:'Jardín nocturno',group:'atelier',color:'#28364c',second:'#b799c9',galleryBase:'flora',copy:'Flores silvestres en lila, azul y albaricoque sobre un fondo azul noche, entre tallos verde oliva. Un jardín de detalles pequeños con agarre coordinado.'},
+ {id:'dalia',name:'Dalia',group:'atelier',color:'#d48c8b',second:'#a24357',galleryBase:'flora',copy:'Dalias de pétalos geométricos en ciruela, terracota y rosa sobre una base rosa empolvado. Flores de gran formato que también decoran el agarre.'}
+];
+FINISHES.push(...FLORAL_FINISHES);
+const NEW_PATTERN_FINISHES=[
+ {id:'orbita',name:'Órbita',group:'atelier',color:'#252e40',second:'#c47742',galleryBase:'nuevos-patrones',copy:'Órbitas de trazo marfil y pequeños planetas color cobre recorren una base azul noche. Un dibujo celeste de líneas finas, con agarre a juego.'},
+ {id:'vitral',name:'Vitral',group:'atelier',color:'#315f5d',second:'#cc9950',galleryBase:'nuevos-patrones',copy:'Arcos y planos geométricos en verde petróleo, ámbar, rosa y crema, unidos por líneas oscuras. Un estampado inspirado en vitrales que continúa en el agarre.'},
+ {id:'tinta',name:'Tinta',group:'atelier',color:'#eee5d4',second:'#53504f',galleryBase:'nuevos-patrones',copy:'Vetado de tinta grafito y gris humo sobre marfil. Trazos orgánicos de efecto marmoleado, con un agarre que retoma el mismo dibujo.'},
+ {id:'big-bang',name:'Big Bang',group:'atelier',color:'#f3e6cf',second:'#cd6a2e',galleryBase:'nuevos-patrones',copy:'Estrellas, destellos y formas en expansión sobre una base crema. Azul, naranja y amarillo dan ritmo a un estampado gráfico que también envuelve el agarre.'}
+];
+FINISHES.push(...NEW_PATTERN_FINISHES);
 const ATELIER_REPLACEMENTS={
  lunares:{name:'Fragmento',color:'#eee4d2',second:'#2d5846',galleryFolder:'fragmento',copy:'Fragmentos irregulares en verde bosque, terracota, lila y grafito sobre una base marfil. Un estampado arquitectónico con agarre a juego.'},
  ondas:{name:'Entrelazado',color:'#bc4d32',second:'#45679c',galleryFolder:'entrelazado',copy:'Cintas en crema y azul se entrecruzan sobre un fondo terracota. Una trama gráfica que continúa por los bordes y el agarre.'},
@@ -41,6 +55,7 @@ for(const finish of FINISHES)if(ATELIER_REPLACEMENTS[finish.id])Object.assign(fi
 const REALISTIC_IPHONE_MODELS=['iphone15','iphone16promax','iphone17promax'];
 const REALISTIC_ANDROID_MODELS=['pixel11','s26ultra','s26'];
 function asset(model,finish,size='large'){
+ if(!model.tablet&&finish.galleryBase)return `assets/${finish.galleryBase}/${model.id}/${finish.id}/01-con-telefono.webp`;
  if(!model.tablet&&ATELIER_REPLACEMENTS[finish.id])return `assets/atelier-propuestas/${model.id}/${ATELIER_REPLACEMENTS[finish.id].galleryFolder}/01-con-telefono.webp`;
  if(REALISTIC_ANDROID_MODELS.includes(model.id))return `assets/android-realista/${model.id}/${finish.id}/01-con-telefono.webp`;
  if(REALISTIC_IPHONE_MODELS.includes(model.id))return `assets/iphone-realista/${model.id}/${finish.id}/01-con-telefono.webp`;
